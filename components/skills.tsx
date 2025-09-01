@@ -14,21 +14,21 @@ export function Skills() {
       ],
     },
     {
-      title: "Frontend Development",
+      title: "Cloud & DevOps",
       skills: [
-        { name: "React/Next.js", level: 85 },
-        { name: "Tailwind CSS", level: 82 },
-        { name: "Shopify (Liquid)", level: 80 },
-        { name: "Node.js", level: 78 },
+        { name: "AWS (Lambda, API Gateway, S3, IAM)", level: 85 },
+        { name: "Docker", level: 82 },
+        { name: "Kubernetes", level: 78 },
+        { name: "CI/CD Pipelines", level: 80 },
       ],
     },
     {
-      title: "Cloud & DevOps",
+      title: "Frontend & Full-Stack",
       skills: [
-        { name: "AWS", level: 85 },
-        { name: "Docker", level: 80 },
-        { name: "Kubernetes", level: 75 },
-        { name: "CI/CD", level: 82 },
+        { name: "React/Next.js", level: 82 },
+        { name: "Node.js", level: 80 },
+        { name: "Tailwind CSS", level: 78 },
+        { name: "Shopify (Liquid)", level: 75 },
       ],
     },
   ]
@@ -36,20 +36,25 @@ export function Skills() {
   const additionalSkills = [
     "PostgreSQL",
     "MySQL",
-    "Oracle",
+    "Oracle DB",
     "ElasticSearch",
     "Hibernate",
     "Python",
     "Jenkins",
+    "Git",
     "OAuth2",
     "JWT",
-    "AES-256",
-    "TDD",
+    "AES-256 Encryption",
     "JUnit",
+    "TDD",
     "Agile/Scrum",
     "Team Leadership",
     "Mentoring",
     "Performance Optimization",
+    "Incident Response",
+    "Cross-team Collaboration",
+    "Cybersecurity Fundamentals",
+    "Telecommunications Network Engineering",
   ]
 
   return (
@@ -86,6 +91,9 @@ export function Skills() {
         <Card>
           <CardHeader>
             <CardTitle>Additional Skills & Technologies</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Comprehensive technical expertise across databases, security, testing, and soft skills
+            </p>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">

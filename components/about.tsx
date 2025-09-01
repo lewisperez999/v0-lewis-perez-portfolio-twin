@@ -39,19 +39,21 @@ export function About() {
           {/* About Text */}
           <div className="space-y-6">
             <p className="text-lg leading-relaxed">
-              I'm a seasoned Software Engineer with 8+ years of experience delivering secure, scalable solutions in
-              banking and telecommunications. My expertise spans Java, Spring Boot, AWS, and modern full-stack
-              technologies, with a proven track record of performance optimization and team leadership.
+              I'm a Senior Software Engineer with 8+ years of experience delivering secure, scalable, and
+              high-performing systems across banking, telecom, and e-commerce domains. My expertise lies in Java, Spring
+              Boot, APIs, PostgreSQL, and AWS, with proven achievements in performance optimization, data migration, and
+              microservices architecture.
             </p>
             <p className="text-lg leading-relaxed">
-              My journey took me from enterprise roles at IBM, Amdocs, and ING in the Philippines to pursuing advanced
-              IT studies in Australia. I've successfully migrated 16M+ records, cut API response times by 60%, and
-              mentored teams to achieve higher velocity and fewer incidents.
+              Relocating to Melbourne in 2023, I've since complemented my enterprise software background with freelance
+              full-stack development (React, Next.js, Shopify) and formal studies in cybersecurity and
+              telecommunications network engineering. I'm motivated by solving complex technical challenges that deliver
+              measurable business impact.
             </p>
             <p className="text-lg leading-relaxed">
-              Currently freelancing in full-stack development while building local Australian experience, I'm passionate
-              about solving real-world problems with measurable outcomes. My goal is to contribute to innovative teams
-              as a solutions architect or team lead, bringing enterprise reliability with startup agility.
+              My career goal is to grow into a Solutions Architect or Engineering Lead role within the next 3–5 years,
+              bringing enterprise-grade reliability with adaptability and continuous professional growth. I thrive in
+              feedback-driven, knowledge-sharing environments where I can mentor teams and deliver innovative solutions.
             </p>
           </div>
 

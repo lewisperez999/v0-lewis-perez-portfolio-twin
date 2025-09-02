@@ -57,6 +57,12 @@ export function Header() {
               Skills
             </button>
             <button
+              onClick={() => scrollToSection("ai-chat")}
+              className="text-foreground hover:text-primary transition-colors"
+            >
+              AI Chat
+            </button>
+            <button
               onClick={() => scrollToSection("contact")}
               className="text-foreground hover:text-primary transition-colors"
             >
@@ -101,6 +107,12 @@ export function Header() {
                 className="text-left text-foreground hover:text-primary transition-colors"
               >
                 Skills
+              </button>
+              <button
+                onClick={() => scrollToSection("ai-chat")}
+                className="text-left text-foreground hover:text-primary transition-colors"
+              >
+                AI Chat
               </button>
               <button
                 onClick={() => scrollToSection("contact")}

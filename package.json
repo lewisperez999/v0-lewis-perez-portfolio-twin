@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.23",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
@@ -39,7 +40,10 @@
     "@radix-ui/react-tooltip": "1.1.6",
     "@remix-run/react": "latest",
     "@sveltejs/kit": "latest",
+    "@types/pg": "^8.15.5",
+    "@upstash/vector": "^1.2.2",
     "@vercel/analytics": "latest",
+    "ai": "^5.0.29",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -51,6 +55,7 @@
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
     "next-themes": "latest",
+    "pg": "^8.16.3",
     "react": "^19",
     "react-day-picker": "9.8.0",
     "react-dom": "^19",
@@ -62,9 +67,10 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
+    "vercel": "^46.1.1",
     "vue": "latest",
     "vue-router": "latest",
-    "zod": "3.25.67"
+    "zod": "4.1.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",

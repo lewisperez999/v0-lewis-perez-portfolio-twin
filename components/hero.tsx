@@ -32,7 +32,7 @@ export function Hero() {
                 Get In Touch
                 <ArrowDown className="ml-2 h-4 w-4 group-hover:translate-y-1 transition-transform" />
               </Button>
-              <Button variant="outline" size="lg" className="group bg-transparent">
+              <Button variant="outline" size="lg" onClick={() => scrollToSection("ai-chat")} className="group bg-transparent">
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Chat with My AI
               </Button>

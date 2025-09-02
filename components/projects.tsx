@@ -6,53 +6,57 @@ import { ExternalLink, Github } from "lucide-react"
 export function Projects() {
   const projects = [
     {
-      title: "Banking Microservices Platform",
+      title: "Shopify E‑commerce Build (Gintuan atbp)",
       description:
-        "Secure customer onboarding system with OAuth2 authentication and AES-256 encryption. Reduced API response times by 60% while maintaining strict compliance standards.",
-      technologies: ["Java", "Spring Boot", "PostgreSQL", "AWS", "OAuth2", "Microservices"],
+        "Custom Shopify store with theme development, secure Stripe/PayPal integrations, and checkout optimizations; analytics‑driven iteration to lift conversions.",
+      technologies: ["Shopify", "Liquid", "React", "Next.js", "Stripe", "PayPal", "Tailwind CSS"],
       achievements: [
-        "Cut API response time from 500ms to 200ms",
-        "Boosted onboarding throughput +30%",
-        "Zero security incidents in production",
-      ],
-      type: "Enterprise",
-      company: "ING Bank",
-    },
-    {
-      title: "Telecom Data Migration System",
-      description:
-        "Large-scale data migration solution processing 16M+ records with ElasticSearch optimization. Improved query efficiency and reduced system incidents significantly.",
-      technologies: ["Java", "ElasticSearch", "Oracle", "Docker", "Kubernetes"],
-      achievements: [
-        "Migrated 16M+ records successfully",
-        "40% faster delivery timeline",
-        "Improved query efficiency +30%",
-      ],
-      type: "Enterprise",
-      company: "IBM",
-    },
-    {
-      title: "E-commerce Optimization Suite",
-      description:
-        "Modern Shopify-based e-commerce solutions with React frontend. Focused on conversion optimization and responsive design for Australian market.",
-      technologies: ["React", "Next.js", "Shopify", "Tailwind CSS", "Node.js"],
-      achievements: [
-        "Increased sales conversion +20%",
-        "Mobile-first responsive design",
-        "SEO optimization implementation",
+        "Conversion rate +20% in 3 months",
+        "Support tickets −30% after documentation improvements",
+        "99.9% uptime maintained",
       ],
       type: "Freelance",
-      liveUrl: "#",
-      githubUrl: "#",
+      liveUrl: "https://gintuanatbp.com/",
     },
     {
-      title: "Performance Monitoring Dashboard",
+      title: "Portfolio Website (Next.js + Payload CMS)",
       description:
-        "Real-time system monitoring and analytics dashboard for telecommunications infrastructure. Enhanced system reliability and incident response times.",
-      technologies: ["Java", "Spring Boot", "ElasticSearch", "React", "PostgreSQL"],
-      achievements: ["Reduced incidents -25%", "Real-time monitoring implementation", "Automated alert system"],
+        "Personal portfolio integrated with a headless CMS for projects, blog, and case studies. Focus on performance, SEO, and modern UI.",
+      technologies: ["Next.js", "React", "Payload CMS", "Tailwind CSS"],
+      achievements: [
+        "Faster authoring & content updates",
+        "Improved Lighthouse and SEO scores",
+        "Type safety across CMS and frontend",
+      ],
+      type: "Personal",
+      liveUrl: "https://www.lewisperez.dev/",
+      githubUrl: "https://github.com/lewisperez999/portfolio-cms-payload",
+    },
+    {
+      title: "ING Onboarding Microservices",
+      description:
+        "Performance and reliability improvements for customer onboarding APIs; standardized validation and exception handling with security best practices.",
+      technologies: ["Java", "Spring Boot", "PostgreSQL", "AWS", "Docker", "Jenkins"],
+      achievements: ["Response time ~500ms→~200ms", "Throughput +30%", "Defects reduced via standardization"],
       type: "Enterprise",
-      company: "Amdocs",
+      company: "ING Business Shared Services",
+    },
+    {
+      title: "IBM ElasticSearch Data Migration Utility",
+      description:
+        "Multithreaded Java tool to migrate 16M+ records into ElasticSearch with integrity checks and logging for traceability.",
+      technologies: ["Java", "ElasticSearch", "Oracle DB", "Jenkins"],
+      achievements: ["Migration speed +40%", "Reduced post‑release bugs ~15%", "16M+ records migrated successfully"],
+      type: "Enterprise",
+      company: "IBM Solutions Delivery Inc.",
+    },
+    {
+      title: "Amdocs Telecom Reliability Improvements",
+      description: "Stability and performance program focused on SQL optimization, memory management, and monitoring.",
+      technologies: ["Java", "Spring", "Oracle DB", "ElasticSearch", "Jenkins"],
+      achievements: ["Query efficiency +30%", "Recurring incidents −25%", "97%+ availability maintained"],
+      type: "Enterprise",
+      company: "Amdocs Philippines Inc.",
     },
   ]
 
@@ -74,7 +78,17 @@ export function Projects() {
                   <div className="flex-1">
                     <CardTitle className="text-xl mb-2">{project.title}</CardTitle>
                     <div className="flex items-center gap-2 mb-3">
-                      <Badge variant={project.type === "Enterprise" ? "default" : "secondary"}>{project.type}</Badge>
+                      <Badge
+                        variant={
+                          project.type === "Enterprise"
+                            ? "default"
+                            : project.type === "Freelance"
+                              ? "secondary"
+                              : "outline"
+                        }
+                      >
+                        {project.type}
+                      </Badge>
                       {project.company && <span className="text-sm text-muted-foreground">@ {project.company}</span>}
                     </div>
                   </div>

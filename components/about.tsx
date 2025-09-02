@@ -39,21 +39,21 @@ export function About() {
           {/* About Text */}
           <div className="space-y-6">
             <p className="text-lg leading-relaxed">
-              I'm a Senior Software Engineer with 8+ years of experience delivering secure, scalable, and
-              high-performing systems across banking, telecom, and e-commerce domains. My expertise lies in Java, Spring
-              Boot, APIs, PostgreSQL, and AWS, with proven achievements in performance optimization, data migration, and
-              microservices architecture.
+              Senior Software Engineer with 8+ years' experience building secure, scalable microservices and APIs across
+              banking and telecom, complemented by full‑stack freelancing (React/Next.js/Shopify) in Australia. My
+              strengths lie in Java, Spring Boot, PostgreSQL, and AWS, with proven results including 500ms→200ms latency
+              reductions, +30% throughput gains, and 40% faster data migrations.
             </p>
             <p className="text-lg leading-relaxed">
-              Relocating to Melbourne in 2023, I've since complemented my enterprise software background with freelance
-              full-stack development (React, Next.js, Shopify) and formal studies in cybersecurity and
-              telecommunications network engineering. I'm motivated by solving complex technical challenges that deliver
-              measurable business impact.
+              I combine enterprise rigor with product speed—optimizing APIs, data flows, and cloud services while
+              coaching teams to deliver. My career journey spans from IBM's global enterprise systems to ING's secure
+              banking microservices, and now includes e-commerce optimization for Australian businesses while pursuing
+              advanced studies in cybersecurity and telecommunications.
             </p>
             <p className="text-lg leading-relaxed">
-              My career goal is to grow into a Solutions Architect or Engineering Lead role within the next 3–5 years,
-              bringing enterprise-grade reliability with adaptability and continuous professional growth. I thrive in
-              feedback-driven, knowledge-sharing environments where I can mentor teams and deliver innovative solutions.
+              Focused on cloud‑native architecture, performance optimization, and mentoring, I'm building toward
+              Solutions Architect or Engineering Lead roles. I thrive in feedback-driven environments where I can
+              deliver measurable business impact while fostering team growth and technical excellence.
             </p>
           </div>
 

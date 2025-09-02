@@ -1,0 +1,106 @@
+{
+  "timestamp": "2025-09-02T21:45:00",
+  "overall_success": true,
+  "validation_results": {
+    "PostgreSQL Import": {
+      "success": true,
+      "details": {
+        "professionals": {
+          "count": 1,
+          "expected": 1,
+          "valid": true
+        },
+        "experiences": {
+          "count": 5,
+          "expected": 5,
+          "valid": true
+        },
+        "skills": {
+          "count": 28,
+          "valid": true
+        },
+        "projects": {
+          "count": 5,
+          "expected": 5,
+          "valid": true
+        },
+        "education": {
+          "count": 3,
+          "expected": 3,
+          "valid": true
+        },
+        "content_chunks": {
+          "count": 22,
+          "valid": true
+        }
+      }
+    },
+    "Content Chunks": {
+      "success": true,
+      "details": {
+        "total_chunks": 22,
+        "chunk_types": {
+          "approach": 1,
+          "education": 1,
+          "experience": 5,
+          "personal_info": 1,
+          "skills": 8,
+          "soft_skills": 3,
+          "summary": 2,
+          "values": 1
+        },
+        "importance_levels": {
+          "critical": 10,
+          "medium": 2,
+          "high": 10
+        },
+        "content_issues": 0
+      }
+    },
+    "Vector Embeddings": {
+      "success": true,
+      "details": {
+        "total_vectors": 22,
+        "dimension": 1024,
+        "dimension_valid": true,
+        "db_chunks": 22,
+        "consistency_valid": true
+      }
+    },
+    "Search Functionality": {
+      "success": true,
+      "details": [
+        {
+          "query": "Java Spring Boot development experience",
+          "top_score": 0.86837727,
+          "score_valid": true,
+          "relevant_types_found": true,
+          "results_count": 5
+        },
+        {
+          "query": "PostgreSQL database optimization",
+          "top_score": 0.8563733,
+          "score_valid": true,
+          "relevant_types_found": true,
+          "results_count": 5
+        },
+        {
+          "query": "leadership and team management",
+          "top_score": 0.83077604,
+          "score_valid": true,
+          "relevant_types_found": true,
+          "results_count": 5
+        }
+      ]
+    },
+    "Data Integrity": {
+      "success": true,
+      "details": {
+        "issues_found": 0,
+        "issues": [],
+        "db_chunks": 22,
+        "vector_chunks": 22
+      }
+    }
+  }
+}

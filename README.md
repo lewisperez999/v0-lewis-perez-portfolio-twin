@@ -48,12 +48,12 @@ The AI assistant can answer questions about:
 ### Environment Configuration
 
 1. Copy the example environment file:
-```bash
+\`\`\`bash
 cp .env.example .env.local
-```
+\`\`\`
 
 2. Update `.env.local` with your credentials:
-```env
+\`\`\`env
 # Required
 OPENAI_API_KEY=sk-proj-your_openai_api_key
 DATABASE_URL=postgresql://username:password@host:port/database
@@ -63,15 +63,15 @@ UPSTASH_VECTOR_REST_TOKEN=your_upstash_token
 # Optional
 GROQ_API_KEY=your_groq_api_key
 VERCEL_AI_GATEWAY_URL=your_vercel_ai_gateway_url
-```
+\`\`\`
 
 ### Database Setup
 
 1. Create PostgreSQL database
 2. Run the schema setup:
-```bash
+\`\`\`bash
 psql -d your_database_url -f database/schema.sql
-```
+\`\`\`
 
 3. Populate with your professional data (modify scripts in `scripts/database/`)
 
@@ -84,20 +84,20 @@ psql -d your_database_url -f database/schema.sql
 ### Local Development
 
 1. Install dependencies:
-```bash
+\`\`\`bash
 pnpm install
-```
+\`\`\`
 
 2. Run development server:
-```bash
+\`\`\`bash
 pnpm dev
-```
+\`\`\`
 
 3. Open [http://localhost:3000](http://localhost:3000)
 
 ## 📁 Project Structure
 
-```
+\`\`\`
 ├── app/
 │   ├── actions/
 │   │   └── chat.ts              # AI chat server actions
@@ -120,7 +120,7 @@ pnpm dev
 │   └── database/               # Database management scripts
 └── data/
     └── sample/                 # Sample data files
-```
+\`\`\`
 
 ## 🤖 AI Integration Details
 
@@ -154,14 +154,14 @@ pnpm dev
 ### Manual Deployment
 
 1. Build the project:
-```bash
+\`\`\`bash
 pnpm build
-```
+\`\`\`
 
 2. Start production server:
-```bash
+\`\`\`bash
 pnpm start
-```
+\`\`\`
 
 ## 📊 Performance Features
 
@@ -175,7 +175,7 @@ pnpm start
 
 Run the verification scripts to ensure everything is working:
 
-```bash
+\`\`\`bash
 # Test database connection
 node scripts/database/test-db-connection.js
 
@@ -184,7 +184,7 @@ node scripts/database/final-verification.js
 
 # Run query examples
 node scripts/database/query-examples.js
-```
+\`\`\`
 
 ## 📖 API Reference
 

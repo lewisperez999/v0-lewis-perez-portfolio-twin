@@ -1,8 +1,55 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { MessageSquare, Database, Clock, CheckCircle, AlertCircle, FileText, Brain, BarChart3 } from "lucide-react"
+import { MessageSquare, Database, Clock, CheckCircle, AlertCircle, FileText, Brain } from "lucide-react"
+import { checkAdminAuth } from "./actions/auth"
+import { checkSystemHealth } from "./actions/system-health"
+import { getDashboardStats, getRecentActivity } from "./actions/dashboard-stats"
 
-export default function AdminDashboard() {
+export default async function AdminDashboard() {
+  // Check authentication before rendering the page
+  await checkAdminAuth()
+  
+  // Get real system health status and dashboard data
+  const [systemHealth, dashboardStats, recentActivity] = await Promise.all([
+    checkSystemHealth(),
+    getDashboardStats(),
+    getRecentActivity()
+  ])
+
+  const getStatusIcon = (status: "healthy" | "warning" | "error") => {
+    switch (status) {
+      case "healthy":
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case "warning":
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />
+      case "error":
+        return <AlertCircle className="h-4 w-4 text-red-500" />
+    }
+  }
+
+  const getStatusBadge = (status: "healthy" | "warning" | "error", message: string) => {
+    switch (status) {
+      case "healthy":
+        return (
+          <Badge variant="secondary" className="bg-green-100 text-green-800">
+            {message}
+          </Badge>
+        )
+      case "warning":
+        return (
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+            {message}
+          </Badge>
+        )
+      case "error":
+        return (
+          <Badge variant="secondary" className="bg-red-100 text-red-800">
+            {message}
+          </Badge>
+        )
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -15,11 +62,23 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">System Status</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            {dashboardStats.systemStatus === "online" ? (
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            ) : dashboardStats.systemStatus === "maintenance" ? (
+              <AlertCircle className="h-4 w-4 text-yellow-500" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-red-500" />
+            )}
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">Online</div>
-            <p className="text-xs text-muted-foreground">All systems operational</p>
+            <div className={`text-2xl font-bold ${
+              dashboardStats.systemStatus === "online" ? "text-green-500" : 
+              dashboardStats.systemStatus === "maintenance" ? "text-yellow-500" : "text-red-500"
+            }`}>
+              {dashboardStats.systemStatus === "online" ? "Online" : 
+               dashboardStats.systemStatus === "maintenance" ? "Maintenance" : "Offline"}
+            </div>
+            <p className="text-xs text-muted-foreground">{dashboardStats.systemMessage}</p>
           </CardContent>
         </Card>
 
@@ -29,8 +88,8 @@ export default function AdminDashboard() {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold">{dashboardStats.totalConversations.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">{dashboardStats.conversationsGrowth} from last month</p>
           </CardContent>
         </Card>
 
@@ -40,7 +99,7 @@ export default function AdminDashboard() {
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5,678</div>
+            <div className="text-2xl font-bold">{dashboardStats.databaseRecords.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Content chunks indexed</p>
           </CardContent>
         </Card>
@@ -51,8 +110,8 @@ export default function AdminDashboard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">245ms</div>
-            <p className="text-xs text-muted-foreground">-15ms from yesterday</p>
+            <div className="text-2xl font-bold">{dashboardStats.avgResponseTime}ms</div>
+            <p className="text-xs text-muted-foreground">{dashboardStats.responseTimeChange} from yesterday</p>
           </CardContent>
         </Card>
       </div>
@@ -65,27 +124,31 @@ export default function AdminDashboard() {
             <CardDescription>Latest user interactions with the AI</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium">Question about Java experience</p>
-                <p className="text-xs text-muted-foreground">2 minutes ago</p>
+            {recentActivity.length > 0 ? (
+              recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-center space-x-4">
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium line-clamp-1">{activity.message}</p>
+                    <p className="text-xs text-muted-foreground">{activity.timeAgo}</p>
+                  </div>
+                  <Badge 
+                    variant="secondary" 
+                    className={
+                      activity.status === "answered" ? "bg-green-100 text-green-800" :
+                      activity.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                      "bg-red-100 text-red-800"
+                    }
+                  >
+                    {activity.status === "answered" ? "Answered" : 
+                     activity.status === "pending" ? "Pending" : "Failed"}
+                  </Badge>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground">No recent activity</p>
               </div>
-              <Badge variant="secondary">Answered</Badge>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium">AWS architecture inquiry</p>
-                <p className="text-xs text-muted-foreground">15 minutes ago</p>
-              </div>
-              <Badge variant="secondary">Answered</Badge>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium">Project portfolio request</p>
-                <p className="text-xs text-muted-foreground">1 hour ago</p>
-              </div>
-              <Badge variant="secondary">Answered</Badge>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -97,30 +160,27 @@ export default function AdminDashboard() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                {getStatusIcon(systemHealth.database.status)}
                 <span className="text-sm">Database Connection</span>
               </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                Healthy
-              </Badge>
+              {getStatusBadge(systemHealth.database.status, systemHealth.database.message)}
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                {getStatusIcon(systemHealth.vectorSearch.status)}
                 <span className="text-sm">Vector Search</span>
               </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                Operational
-              </Badge>
+              {getStatusBadge(systemHealth.vectorSearch.status, systemHealth.vectorSearch.message)}
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <AlertCircle className="h-4 w-4 text-yellow-500" />
+                {getStatusIcon(systemHealth.aiModel.status)}
                 <span className="text-sm">AI Model Response</span>
+                {systemHealth.aiModel.model && (
+                  <span className="text-xs text-muted-foreground">({systemHealth.aiModel.model})</span>
+                )}
               </div>
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                Fallback Mode
-              </Badge>
+              {getStatusBadge(systemHealth.aiModel.status, systemHealth.aiModel.message)}
             </div>
           </CardContent>
         </Card>
@@ -150,16 +210,6 @@ export default function AdminDashboard() {
                 <div>
                   <h3 className="font-medium">Regenerate Embeddings</h3>
                   <p className="text-sm text-muted-foreground">Update vector database</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:bg-accent transition-colors">
-              <CardContent className="flex items-center space-x-4 p-4">
-                <BarChart3 className="h-8 w-8 text-primary" />
-                <div>
-                  <h3 className="font-medium">View Analytics</h3>
-                  <p className="text-sm text-muted-foreground">Detailed performance data</p>
                 </div>
               </CardContent>
             </Card>

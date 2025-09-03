@@ -9,18 +9,19 @@
 
 - **AI-Powered Chat Assistant**: Interactive chat interface with RAG (Retrieval-Augmented Generation)
 - **Vector Search Integration**: Semantic search through professional content using Upstash Vector
-- **Real-time Streaming Responses**: Powered by Vercel AI SDK with OpenAI GPT-4o
+- **Real-time Streaming Responses**: Powered by Vercel AI SDK with configurable AI models
 - **Comprehensive Portfolio**: Experience, skills, projects, and contact information
 - **Modern Tech Stack**: Next.js 15, TypeScript, Tailwind CSS, shadcn/ui
 - **Conversation Persistence**: Chat history management with PostgreSQL
 - **Source Attribution**: AI responses include relevant source references
+- **Configurable AI Models**: Support for multiple AI providers through environment variables
 
 ## 🛠️ Tech Stack
 
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS + shadcn/ui
-- **AI**: Vercel AI SDK, OpenAI GPT-4o
+- **AI**: Vercel AI SDK with configurable models (default: OpenAI GPT-4o)
 - **Vector Database**: Upstash Vector (1024-dimension embeddings)
 - **Database**: PostgreSQL with comprehensive professional data schema
 - **Deployment**: Vercel
@@ -54,16 +55,38 @@ cp .env.example .env.local
 
 2. Update `.env.local` with your credentials:
 \`\`\`env
-# Required
-OPENAI_API_KEY=sk-proj-your_openai_api_key
+# Required - Vercel AI Gateway
+AI_GATEWAY_API_KEY=vck-your_vercel_consumer_key
 DATABASE_URL=postgresql://username:password@host:port/database
 UPSTASH_VECTOR_REST_URL=https://your-vector-db.upstash.io
 UPSTASH_VECTOR_REST_TOKEN=your_upstash_token
 
-# Optional
-GROQ_API_KEY=your_groq_api_key
-VERCEL_AI_GATEWAY_URL=your_vercel_ai_gateway_url
+# Optional - AI Model Configuration
+AI_MODEL=openai/gpt-4o
 \`\`\`
+
+### AI Model Configuration
+
+The `AI_MODEL` environment variable allows you to choose from hundreds of models available through Vercel AI Gateway:
+
+**OpenAI Models:**
+- `openai/gpt-4o` (default) - Most capable, balanced performance
+- `openai/gpt-4o-mini` - Faster, more cost-effective
+- `openai/gpt-4-turbo` - Previous generation flagship
+
+**Anthropic Models:**
+- `anthropic/claude-3.5-sonnet` - Excellent reasoning and coding
+- `anthropic/claude-3-haiku` - Fast and efficient
+
+**Meta Models:**
+- `meta-llama/llama-3.1-70b-instruct` - Open source, strong performance
+- `meta-llama/llama-3.1-8b-instruct` - Lighter, faster option
+
+**Other Providers:**
+- `google/gemini-1.5-pro` - Google's flagship model
+- `mistral/mistral-large` - Mistral's most capable model
+
+Simply change the `AI_MODEL` value and restart your application to switch models.
 
 ### Database Setup
 

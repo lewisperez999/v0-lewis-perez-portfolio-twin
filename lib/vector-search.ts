@@ -21,6 +21,7 @@ export interface SearchResult {
     source?: string
   }
   content: string
+  [key: string]: unknown // Index signature for compatibility
 }
 
 export interface VectorSearchOptions {
@@ -46,6 +47,7 @@ export async function searchVectors(query: string, options: VectorSearchOptions 
 
   try {
     // Start with a simple query format that we know works
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseQuery: any = {
       data: query,
       topK: Math.min(topK, 100),
@@ -84,7 +86,8 @@ export async function searchVectors(query: string, options: VectorSearchOptions 
             content: content || `Content for ${result.id}`, // Fallback content
           })
         } catch (dbError) {
-          console.log("Database lookup failed for chunk:", result.id, "using fallback")
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          console.log("Database lookup failed for chunk:", result.id, "using fallback", dbError)
           // Use vector result metadata as fallback content
           const fallbackContent = String(
             result.metadata?.title || result.metadata?.chunk_type || `Professional content (ID: ${result.id})`,

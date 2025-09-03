@@ -1,67 +1,110 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Play, Database, CheckCircle, AlertCircle, Clock, RefreshCw } from "lucide-react"
+import { Play, Database, CheckCircle, AlertCircle, Clock, RefreshCw, Trash2 } from "lucide-react"
+import { 
+  executeQuery, 
+  getDatabaseStats, 
+  getQueryHistory, 
+  clearQueryHistory,
+  getPredefinedQueries,
+  type QueryResult,
+  type DatabaseStats,
+  type QueryHistoryItem 
+} from "../actions/database-operations"
 
-export function DatabaseOperations() {
+export default function DatabaseOperations() {
   const [query, setQuery] = useState("")
-  const [queryResult, setQueryResult] = useState<any>(null)
+  const [result, setResult] = useState<QueryResult | null>(null)
   const [isExecuting, setIsExecuting] = useState(false)
-  const [queryHistory] = useState([
-    {
-      id: "1",
-      query: "SELECT COUNT(*) FROM content_chunks WHERE category = 'experience'",
-      result: "23 rows",
-      executedAt: "2024-01-15 14:30:00",
-      status: "success",
-    },
-    {
-      id: "2",
-      query: "SELECT * FROM chat_sessions ORDER BY created_at DESC LIMIT 10",
-      result: "10 rows",
-      executedAt: "2024-01-15 14:25:00",
-      status: "success",
-    },
-  ])
+  const [stats, setStats] = useState<DatabaseStats | null>(null)
+  const [history, setHistory] = useState<QueryHistoryItem[]>([])
+  const [predefinedQueries, setPredefinedQueries] = useState<{name: string, query: string}[]>([])
+  const [isLoadingStats, setIsLoadingStats] = useState(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
 
-  const executeQuery = async () => {
-    if (!query.trim()) return
+  // Load initial data
+  useEffect(() => {
+    loadDatabaseStats()
+    loadQueryHistory()
+    loadPredefinedQueries()
+  }, [])
 
-    setIsExecuting(true)
-    // Simulate query execution
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setQueryResult({
-      rows: [
-        { id: 1, name: "Sample Data", created_at: "2024-01-15" },
-        { id: 2, name: "Another Row", created_at: "2024-01-14" },
-      ],
-      rowCount: 2,
-      executionTime: "45ms",
-    })
-    setIsExecuting(false)
+  const loadDatabaseStats = async () => {
+    setIsLoadingStats(true)
+    try {
+      const statsData = await getDatabaseStats()
+      setStats(statsData)
+    } catch (error) {
+      console.error('Failed to load database stats:', error)
+    } finally {
+      setIsLoadingStats(false)
+    }
   }
 
-  const predefinedQueries = [
-    {
-      name: "Content Chunks by Category",
-      query: "SELECT category, COUNT(*) as count FROM content_chunks GROUP BY category ORDER BY count DESC",
-    },
-    {
-      name: "Recent Chat Sessions",
-      query: "SELECT * FROM chat_sessions ORDER BY created_at DESC LIMIT 20",
-    },
-    {
-      name: "Popular Search Queries",
-      query:
-        "SELECT query_text, COUNT(*) as frequency FROM search_queries GROUP BY query_text ORDER BY frequency DESC LIMIT 10",
-    },
-  ]
+  const loadQueryHistory = async () => {
+    setIsLoadingHistory(true)
+    try {
+      const historyData = await getQueryHistory()
+      setHistory(historyData)
+    } catch (error) {
+      console.error('Failed to load query history:', error)
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }
+
+  const loadPredefinedQueries = async () => {
+    try {
+      const queries = await getPredefinedQueries()
+      setPredefinedQueries(queries)
+    } catch (error) {
+      console.error('Failed to load predefined queries:', error)
+    }
+  }
+
+  const executeQueryHandler = async () => {
+    if (!query.trim()) return
+    
+    setIsExecuting(true)
+    setResult(null)
+    
+    try {
+      const queryResult = await executeQuery(query)
+      setResult(queryResult)
+      
+      // Reload history to show the new query
+      await loadQueryHistory()
+    } catch (error) {
+      setResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        executionTime: '0ms'
+      })
+    } finally {
+      setIsExecuting(false)
+    }
+  }
+
+  const clearHistory = async () => {
+    try {
+      await clearQueryHistory()
+      await loadQueryHistory()
+    } catch (error) {
+      console.error('Failed to clear query history:', error)
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const usePredefinedQuery = (predefinedQuery: string) => {
+    setQuery(predefinedQuery)
+  }
 
   return (
     <div className="space-y-6">
@@ -70,10 +113,16 @@ export function DatabaseOperations() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              {stats?.connectionStatus === 'healthy' ? (
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              ) : (
+                <AlertCircle className="h-8 w-8 text-red-500" />
+              )}
               <div>
                 <h3 className="font-medium">Connection</h3>
-                <p className="text-sm text-muted-foreground">Healthy</p>
+                <p className="text-sm text-muted-foreground">
+                  {isLoadingStats ? 'Loading...' : stats?.connectionStatus || 'Unknown'}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -85,7 +134,9 @@ export function DatabaseOperations() {
               <Database className="h-8 w-8 text-primary" />
               <div>
                 <h3 className="font-medium">Tables</h3>
-                <p className="text-sm text-muted-foreground">12 active</p>
+                <p className="text-sm text-muted-foreground">
+                  {isLoadingStats ? 'Loading...' : `${stats?.tableCount || 0} active`}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -96,8 +147,10 @@ export function DatabaseOperations() {
             <div className="flex items-center space-x-3">
               <RefreshCw className="h-8 w-8 text-primary" />
               <div>
-                <h3 className="font-medium">Last Backup</h3>
-                <p className="text-sm text-muted-foreground">2 hours ago</p>
+                <h3 className="font-medium">Total Records</h3>
+                <p className="text-sm text-muted-foreground">
+                  {isLoadingStats ? 'Loading...' : stats?.totalRecords?.toLocaleString() || '0'}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -108,8 +161,10 @@ export function DatabaseOperations() {
             <div className="flex items-center space-x-3">
               <Clock className="h-8 w-8 text-primary" />
               <div>
-                <h3 className="font-medium">Avg Query Time</h3>
-                <p className="text-sm text-muted-foreground">23ms</p>
+                <h3 className="font-medium">Last Backup</h3>
+                <p className="text-sm text-muted-foreground">
+                  {isLoadingStats ? 'Loading...' : stats?.lastBackup || 'Unknown'}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -142,7 +197,7 @@ export function DatabaseOperations() {
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={executeQuery} disabled={isExecuting || !query.trim()}>
+            <Button onClick={executeQueryHandler} disabled={isExecuting || !query.trim()}>
               <Play className="h-4 w-4 mr-2" />
               {isExecuting ? "Executing..." : "Execute Query"}
             </Button>
@@ -151,16 +206,27 @@ export function DatabaseOperations() {
             </Button>
           </div>
 
-          {queryResult && (
+          {result && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">
-                  {queryResult.rowCount} rows returned in {queryResult.executionTime}
-                </Badge>
-              </div>
-              <div className="border rounded-md p-4 bg-muted/50">
-                <pre className="text-sm overflow-x-auto">{JSON.stringify(queryResult.rows, null, 2)}</pre>
-              </div>
+              {result.success ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">
+                      {result.rowCount} rows returned in {result.executionTime}
+                    </Badge>
+                  </div>
+                  <div className="border rounded-md p-4 bg-muted/50">
+                    <pre className="text-sm overflow-x-auto">{JSON.stringify(result.data, null, 2)}</pre>
+                  </div>
+                </>
+              ) : (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Error: {result.error}
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           )}
         </CardContent>
@@ -192,32 +258,46 @@ export function DatabaseOperations() {
       {/* Query History */}
       <Card>
         <CardHeader>
-          <CardTitle>Query History</CardTitle>
-          <CardDescription>Recent database operations</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Query History</CardTitle>
+              <CardDescription>Recent database operations</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={clearHistory}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear History
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Query</TableHead>
-                <TableHead>Result</TableHead>
-                <TableHead>Executed At</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {queryHistory.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-mono text-sm max-w-xs truncate">{item.query}</TableCell>
-                  <TableCell>{item.result}</TableCell>
-                  <TableCell>{item.executedAt}</TableCell>
-                  <TableCell>
-                    <Badge variant={item.status === "success" ? "secondary" : "destructive"}>{item.status}</Badge>
-                  </TableCell>
+          {isLoadingHistory ? (
+            <div className="text-center py-4 text-muted-foreground">Loading history...</div>
+          ) : history.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">No query history available</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Query</TableHead>
+                  <TableHead>Result</TableHead>
+                  <TableHead>Executed At</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {history.map((item: QueryHistoryItem) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-mono text-sm max-w-xs truncate">{item.query}</TableCell>
+                    <TableCell>{item.result}</TableCell>
+                    <TableCell>{item.executedAt}</TableCell>
+                    <TableCell>
+                      <Badge variant={item.status === "success" ? "secondary" : "destructive"}>{item.status}</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Download, Upload } from "lucide-react"
-import { DatabaseOperations } from "../components/database-operations"
+import DatabaseOperations from "../components/database-operations"
 import { DatabaseSchema } from "../components/database-schema"
 import { DatabaseBackup } from "../components/database-backup"
 

@@ -19,7 +19,7 @@ export function Hero() {
           {/* Content */}
           <div className="flex-1 text-center lg:text-left">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-balance mb-6">
-              Hi, I'm <span className="text-primary">Lewis Perez</span>
+              Hi, I&apos;m <span className="text-primary">Lewis Perez</span>
             </h1>
             <p className="text-xl sm:text-2xl text-muted-foreground mb-4">Full Stack Developer & AI Specialist</p>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl">
@@ -45,7 +45,7 @@ export function Hero() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-3xl"></div>
               <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-primary/20 bg-muted">
                 <Image
-                  src="/professional-developer-portrait.png"
+                  src="/professional-developer-portrait.jpg"
                   alt="Lewis Perez - Professional Developer"
                   fill
                   className="object-cover"

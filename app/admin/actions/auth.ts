@@ -7,6 +7,8 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123"
 
 export async function adminLogin(password: string) {
   try {
+    console.log("Admin login attempt at:", new Date().toISOString())
+    
     if (password !== ADMIN_PASSWORD) {
       return { success: false, error: "Invalid password" }
     }
@@ -19,13 +21,23 @@ export async function adminLogin(password: string) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 60 * 60 * 24, // 24 hours
-      path: "/admin",
+      path: "/",
     })
 
+    console.log("Cookie set successfully")
     return { success: true }
   } catch (error) {
     console.error("Admin login error:", error)
     return { success: false, error: "Login failed" }
+  }
+}
+
+export async function checkAdminAuth() {
+  const cookieStore = await cookies()
+  const adminSession = cookieStore.get("admin-session")
+
+  if (!adminSession || adminSession.value !== "authenticated") {
+    redirect("/admin/login")
   }
 }
 

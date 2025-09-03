@@ -276,7 +276,7 @@ export function AIChat({ className }: AIChatProps) {
             </Button>
           </div>
           <div className="text-xs text-muted-foreground mt-2">
-            Press Enter to send • This AI is trained on Lewis Perez's professional background
+            Press Enter to send • This AI is trained on Lewis Perez&apos;s professional background
           </div>
         </div>
       </CardContent>

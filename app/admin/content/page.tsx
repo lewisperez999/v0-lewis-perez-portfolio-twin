@@ -4,6 +4,7 @@ import { Upload, Download } from "lucide-react"
 import { PersonalInfoEditor } from "../components/personal-info-editor"
 import { ExperienceEditor } from "../components/experience-editor"
 import { ProjectsEditor } from "../components/projects-editor"
+import { SkillsEditor } from "../components/skills-editor"
 import { ContentChunksManager } from "../components/content-chunks-manager"
 import { JsonEditor } from "../components/json-editor"
 
@@ -28,10 +29,11 @@ export default function ContentManagementPage() {
       </div>
 
       <Tabs defaultValue="personal" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="personal">Personal Info</TabsTrigger>
           <TabsTrigger value="experience">Experience</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="skills">Skills</TabsTrigger>
           <TabsTrigger value="chunks">Content Chunks</TabsTrigger>
           <TabsTrigger value="json">JSON Editor</TabsTrigger>
         </TabsList>
@@ -46,6 +48,10 @@ export default function ContentManagementPage() {
 
         <TabsContent value="projects">
           <ProjectsEditor />
+        </TabsContent>
+
+        <TabsContent value="skills">
+          <SkillsEditor />
         </TabsContent>
 
         <TabsContent value="chunks">

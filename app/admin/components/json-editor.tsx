@@ -1,41 +1,100 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Save, Download, Upload, RefreshCw, CheckCircle, AlertCircle } from "lucide-react"
+import { Save, Download, Upload, RefreshCw, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
+import { getPersonalInfo } from "../actions/personal-info"
+import { getExperiences } from "../actions/experience"
+import { getProjects } from "../actions/projects"
+import { getSkills } from "../actions/skills"
+import { getContentChunks } from "../actions/content-chunks"
+
+interface PortfolioData {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  personal_info: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  experiences: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  projects: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  skills: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content_chunks: any[]
+  exported_at: string
+}
 
 export function JsonEditor() {
-  const [jsonContent, setJsonContent] = useState(`{
-  "personal_info": {
-    "name": "Lewis Perez",
-    "title": "Senior Software Engineer",
-    "location": "Melbourne, Australia",
-    "email": "lewis@lewisperez.dev"
-  },
-  "experience": [
-    {
-      "company": "ING Bank",
-      "position": "Senior Software Engineer",
-      "duration": "Jan 2023 - Aug 2024",
-      "achievements": [
-        "Optimized API response times from 500ms to 200ms",
-        "Led team of 4 developers on core banking features"
-      ]
-    }
-  ]
-}`)
-
+  const [jsonContent, setJsonContent] = useState("")
   const [isValid, setIsValid] = useState(true)
   const [validationError, setValidationError] = useState("")
-  const [isSaving, setIsSaving] = useState(false)
+  const [isSaving, setSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
+  useEffect(() => {
+    loadPortfolioData()
+  }, [])
+
+  const loadPortfolioData = async () => {
+    try {
+      setIsLoading(true)
+      
+      // Load all portfolio data
+      const [personalInfo, experiences, projects, skills, contentChunks] = await Promise.all([
+        getPersonalInfo(),
+        getExperiences(),
+        getProjects(),
+        getSkills(),
+        getContentChunks()
+      ])
+
+      const portfolioData: PortfolioData = {
+        personal_info: personalInfo,
+        experiences: experiences,
+        projects: projects,
+        skills: skills,
+        content_chunks: contentChunks,
+        exported_at: new Date().toISOString()
+      }
+
+      const jsonString = JSON.stringify(portfolioData, null, 2)
+      setJsonContent(jsonString)
+      setIsValid(true)
+      setLastUpdated(new Date())
+      
+    } catch (error) {
+      console.error("Error loading portfolio data:", error)
+      setValidationError("Failed to load portfolio data from database")
+      setIsValid(false)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const validateJson = (content: string) => {
     try {
-      JSON.parse(content)
+      const parsed = JSON.parse(content)
+      
+      // Basic structure validation
+      const requiredFields = ['personal_info', 'experiences', 'projects', 'skills', 'content_chunks']
+      const missingFields = requiredFields.filter(field => !(field in parsed))
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required fields: ${missingFields.join(', ')}`)
+      }
+
+      // Validate array fields
+      const arrayFields = ['experiences', 'projects', 'skills', 'content_chunks']
+      for (const field of arrayFields) {
+        if (!Array.isArray(parsed[field])) {
+          throw new Error(`Field '${field}' must be an array`)
+        }
+      }
+
       setIsValid(true)
       setValidationError("")
       return true
@@ -54,10 +113,29 @@ export function JsonEditor() {
   const handleSave = async () => {
     if (!isValid) return
 
-    setIsSaving(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsSaving(false)
+    setSaving(true)
+    try {
+      // Parse the JSON content
+      const portfolioData = JSON.parse(jsonContent)
+      
+      // Here you would implement the logic to save back to database
+      // For now, just simulate the save
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      
+      // In a real implementation, you'd call server actions to update each data type
+      // await updatePersonalInfo(portfolioData.personal_info)
+      // await updateExperiences(portfolioData.experiences)
+      // etc.
+      
+      setLastUpdated(new Date())
+      alert("Portfolio data saved successfully! (Note: Full save functionality would be implemented in a production system)")
+      
+    } catch (error) {
+      console.error("Error saving portfolio data:", error)
+      alert("Error saving portfolio data. Please check the JSON format and try again.")
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleExport = () => {
@@ -65,7 +143,7 @@ export function JsonEditor() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = "mytwin-data.json"
+    a.download = `portfolio-data-${new Date().toISOString().split('T')[0]}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -88,14 +166,50 @@ export function JsonEditor() {
     input.click()
   }
 
+  const getDataStats = () => {
+    try {
+      const data = JSON.parse(jsonContent)
+      return {
+        experiences: Array.isArray(data.experiences) ? data.experiences.length : 0,
+        projects: Array.isArray(data.projects) ? data.projects.length : 0,
+        skills: Array.isArray(data.skills) ? data.skills.length : 0,
+        contentChunks: Array.isArray(data.content_chunks) ? data.content_chunks.length : 0,
+        hasPersonalInfo: !!data.personal_info
+      }
+    } catch {
+      return {
+        experiences: 0,
+        projects: 0,
+        skills: 0,
+        contentChunks: 0,
+        hasPersonalInfo: false
+      }
+    }
+  }
+
+  const stats = getDataStats()
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading portfolio data...</span>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">JSON Data Editor</h2>
-          <p className="text-muted-foreground">Direct editing of the complete data structure</p>
+          <p className="text-muted-foreground">Complete portfolio data structure from database</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={loadPortfolioData}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reload from DB
+          </Button>
           <Button variant="outline" onClick={handleImport}>
             <Upload className="h-4 w-4 mr-2" />
             Import
@@ -105,10 +219,44 @@ export function JsonEditor() {
             Export
           </Button>
           <Button onClick={handleSave} disabled={!isValid || isSaving}>
-            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
+      </div>
+
+      {/* Data Statistics */}
+      <div className="grid gap-4 md:grid-cols-5">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{stats.hasPersonalInfo ? "✓" : "✗"}</div>
+            <p className="text-xs text-muted-foreground">Personal Info</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{stats.experiences}</div>
+            <p className="text-xs text-muted-foreground">Experiences</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{stats.projects}</div>
+            <p className="text-xs text-muted-foreground">Projects</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{stats.skills}</div>
+            <p className="text-xs text-muted-foreground">Skills</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{stats.contentChunks}</div>
+            <p className="text-xs text-muted-foreground">Content Chunks</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Validation Status */}
@@ -130,6 +278,11 @@ export function JsonEditor() {
                 <Badge variant="destructive">Syntax error</Badge>
               </>
             )}
+            {lastUpdated && (
+              <span className="text-sm text-muted-foreground ml-4">
+                Last updated: {lastUpdated.toLocaleString()}
+              </span>
+            )}
           </div>
           {!isValid && (
             <Alert variant="destructive" className="mt-4">
@@ -143,9 +296,9 @@ export function JsonEditor() {
       {/* JSON Editor */}
       <Card>
         <CardHeader>
-          <CardTitle>Data Structure</CardTitle>
+          <CardTitle>Complete Portfolio Data Structure</CardTitle>
           <CardDescription>
-            Edit the complete JSON structure. Changes will regenerate content chunks and embeddings.
+            Live data from the database. Export for backup or import to restore.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -153,30 +306,34 @@ export function JsonEditor() {
             value={jsonContent}
             onChange={(e) => handleJsonChange(e.target.value)}
             className="font-mono text-sm min-h-[500px]"
-            placeholder="Enter valid JSON data..."
+            placeholder="Loading portfolio data..."
           />
         </CardContent>
       </Card>
 
-      {/* Actions */}
+      {/* Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Post-Save Actions</CardTitle>
-          <CardDescription>Actions that will be performed after saving JSON changes</CardDescription>
+          <CardTitle>About JSON Editor</CardTitle>
+          <CardDescription>How to use this interface effectively</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <RefreshCw className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Regenerate content chunks from updated data</span>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-start gap-3">
+              <RefreshCw className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <span><strong>Reload from DB:</strong> Fetches the latest data from the database, overwriting any unsaved changes</span>
             </div>
-            <div className="flex items-center gap-3">
-              <RefreshCw className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Update vector embeddings for improved search</span>
+            <div className="flex items-start gap-3">
+              <Download className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <span><strong>Export:</strong> Download the current JSON as a backup file</span>
             </div>
-            <div className="flex items-center gap-3">
-              <RefreshCw className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Validate data integrity and relationships</span>
+            <div className="flex items-start gap-3">
+              <Upload className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <span><strong>Import:</strong> Load JSON data from a file (validates structure before allowing save)</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <Save className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <span><strong>Save Changes:</strong> Write modified data back to the database (full implementation pending)</span>
             </div>
           </div>
         </CardContent>

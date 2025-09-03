@@ -1,9 +1,21 @@
 "use server"
 import { z } from "zod"
 import { getAIChatContext, searchVectors, type SearchResult } from "@/lib/vector-search"
+import { logConversation } from "@/app/admin/actions/conversation-logs"
 
 // No need to import OpenAI provider when using Vercel AI Gateway
 // The AI SDK will automatically use the gateway when model is specified as string
+
+/**
+ * Get the AI model from environment variable with fallback
+ * Supports any model available through Vercel AI Gateway
+ * Examples: "openai/gpt-4o", "anthropic/claude-3.5-sonnet", "meta-llama/llama-3.1-70b-instruct"
+ */
+function getAIModel(): string {
+  const model = process.env.AI_MODEL || "openai/gpt-4o"
+  console.log(`Using AI model: ${model}`) // Helpful for debugging
+  return model
+}
 
 // Schema for conversation message
 const MessageSchema = z.object({
@@ -26,6 +38,7 @@ const MessageSchema = z.object({
 export type Message = z.infer<typeof MessageSchema>
 
 // Schema for chat session
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ChatSessionSchema = z.object({
   id: z.string(),
   messages: z.array(MessageSchema),
@@ -39,6 +52,8 @@ export type ChatSession = z.infer<typeof ChatSessionSchema>
  * Generate AI response with RAG context
  */
 export async function generateAIResponse(userMessage: string, conversationHistory: Message[] = []) {
+  const startTime = Date.now()
+  
   try {
     // Get relevant context from vector search (with fallback)
     let context = ""
@@ -49,6 +64,7 @@ export async function generateAIResponse(userMessage: string, conversationHistor
       const contextResult = await getAIChatContext(userMessage)
       context = contextResult.context
       sources = contextResult.sources
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       relevanceScore = contextResult.relevanceScore
     } catch (error) {
       console.log("Vector search failed, continuing without context:", error)
@@ -56,36 +72,38 @@ export async function generateAIResponse(userMessage: string, conversationHistor
         "Professional software engineer with expertise in Java/Spring Boot, database optimization, and enterprise systems."
     }
 
-    if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY) {
-      console.log("No AI API key available, using mock response")
-      return generateMockResponse(userMessage, context, sources)
+    if (!process.env.AI_GATEWAY_API_KEY) {
+      console.log("No AI Gateway API key available, using mock response")
+      const mockResult = generateMockResponse(userMessage, context, sources)
+      
+      // Log the conversation with enhanced database logging
+      const responseTime = Date.now() - startTime
+      await logConversation(
+        userMessage, 
+        mockResult.response, 
+        "answered", 
+        responseTime,
+        undefined, // sessionId - could be added later
+        "mock-response", // modelUsed
+        sources, // vectorSources
+        context // contextUsed
+      )
+      
+      return mockResult
     }
 
-    // Try Groq first if available, then OpenAI
+    // Use Vercel AI Gateway with configurable model
     let result
     try {
-      if (process.env.GROQ_API_KEY) {
-        const { generateText } = await import("ai")
-        const { groq } = await import("@ai-sdk/groq")
+      const { generateText } = await import("ai")
 
-        result = await generateText({
-          model: groq("llama-3.1-70b-versatile"),
-          messages: buildMessages(userMessage, conversationHistory, context),
-          temperature: 0.7,
-        })
-      } else if (process.env.OPENAI_API_KEY) {
-        const { generateText } = await import("ai")
+      result = await generateText({
+        model: getAIModel(),
+        messages: buildMessages(userMessage, conversationHistory, context),
+        temperature: 0.7,
+      })
 
-        result = await generateText({
-          model: "openai/gpt-4o",
-          messages: buildMessages(userMessage, conversationHistory, context),
-          temperature: 0.7,
-        })
-      } else {
-        throw new Error("No AI provider available")
-      }
-
-      return {
+      const response = {
         response: result.text,
         sources: sources.map((s) => ({
           id: s.id,
@@ -94,13 +112,58 @@ export async function generateAIResponse(userMessage: string, conversationHistor
           relevanceScore: s.score,
         })),
       }
+
+      // Log successful conversation with enhanced database logging
+      const responseTime = Date.now() - startTime
+      await logConversation(
+        userMessage, 
+        result.text, 
+        "answered", 
+        responseTime,
+        undefined, // sessionId - could be added later
+        getAIModel(), // modelUsed
+        sources, // vectorSources
+        context // contextUsed
+      )
+
+      return response
     } catch (aiError) {
       console.log("AI generation failed, using mock response:", aiError)
-      return generateMockResponse(userMessage, context, sources)
+      const mockResult = generateMockResponse(userMessage, context, sources)
+      
+      // Log failed attempt with fallback
+      const responseTime = Date.now() - startTime
+      await logConversation(
+        userMessage, 
+        mockResult.response, 
+        "failed", 
+        responseTime,
+        undefined, // sessionId
+        getAIModel(), // modelUsed
+        sources, // vectorSources
+        context // contextUsed
+      )
+      
+      return mockResult
     }
   } catch (error) {
     console.error("AI response error:", error)
-    return generateMockResponse(userMessage, "", [])
+    const fallbackResult = generateMockResponse(userMessage, "", [])
+    
+    // Log error case with enhanced database logging
+    const responseTime = Date.now() - startTime
+    await logConversation(
+      userMessage, 
+      fallbackResult.response, 
+      "failed", 
+      responseTime,
+      undefined, // sessionId
+      "error-fallback", // modelUsed
+      [], // vectorSources
+      "" // contextUsed
+    )
+    
+    return fallbackResult
   }
 }
 
@@ -210,7 +273,7 @@ export async function searchProfessionalContent(query: string) {
  */
 export async function getSuggestedQuestions() {
   try {
-    if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY) {
+    if (!process.env.AI_GATEWAY_API_KEY) {
       return [
         "What's your experience with Java and Spring Boot development?",
         "Can you tell me about your database optimization achievements?",
@@ -227,19 +290,17 @@ export async function getSuggestedQuestions() {
       const contextResult = await getAIChatContext("professional experience skills achievements")
       context = contextResult.context
     } catch (error) {
-      console.log("Using fallback context for questions")
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      console.log("Using fallback context for questions", error)
       context =
         "Senior Software Engineer with Java/Spring Boot expertise, database optimization experience, and enterprise system development background."
     }
 
     const { generateObject } = await import("ai")
 
-    let result
-    if (process.env.GROQ_API_KEY) {
-      const { groq } = await import("@ai-sdk/groq")
-      result = await generateObject({
-        model: groq("llama-3.1-70b-versatile"),
-        prompt: `Based on this professional background context, generate 6 engaging questions that would showcase the person's expertise and experience. Make them specific and likely to yield interesting answers.
+    const result = await generateObject({
+      model: getAIModel(),
+      prompt: `Based on this professional background context, generate 6 engaging questions that would showcase the person's expertise and experience. Make them specific and likely to yield interesting answers.
 
 Context: ${context.slice(0, 2000)}
 
@@ -252,31 +313,10 @@ Generate questions that cover:
 - Career growth and learning
 
 Format as a JSON array of question strings.`,
-        schema: z.object({
-          questions: z.array(z.string()).length(6),
-        }),
-      })
-    } else {
-      result = await generateObject({
-        model: "openai/gpt-4o",
-        prompt: `Based on this professional background context, generate 6 engaging questions that would showcase the person's expertise and experience. Make them specific and likely to yield interesting answers.
-
-Context: ${context.slice(0, 2000)}
-
-Generate questions that cover:
-- Technical expertise and specific technologies
-- Notable achievements and metrics
-- Project experiences and challenges solved
-- Leadership and collaboration
-- Industry-specific knowledge
-- Career growth and learning
-
-Format as a JSON array of question strings.`,
-        schema: z.object({
-          questions: z.array(z.string()).length(6),
-        }),
-      })
-    }
+      schema: z.object({
+        questions: z.array(z.string()).length(6),
+      }),
+    })
 
     return result.object.questions
   } catch (error) {

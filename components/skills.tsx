@@ -1,61 +1,31 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
+import { getSkillsByCategory, initializeDefaultSkills } from "@/app/admin/actions/skills"
 
-export function Skills() {
-  const skillCategories = [
-    {
-      title: "Backend Development",
-      skills: [
-        { name: "Java 8+", level: 95 },
-        { name: "Spring Boot", level: 92 },
-        { name: "REST APIs", level: 90 },
-        { name: "Microservices", level: 88 },
-      ],
-    },
-    {
-      title: "Cloud & DevOps",
-      skills: [
-        { name: "AWS (Lambda, API Gateway, S3, IAM)", level: 85 },
-        { name: "Docker", level: 82 },
-        { name: "Kubernetes", level: 78 },
-        { name: "CI/CD Pipelines", level: 80 },
-      ],
-    },
-    {
-      title: "Frontend & Full-Stack",
-      skills: [
-        { name: "React/Next.js", level: 82 },
-        { name: "Node.js", level: 80 },
-        { name: "Tailwind CSS", level: 78 },
-        { name: "Shopify (Liquid)", level: 75 },
-      ],
-    },
+export async function Skills() {
+  // Initialize default data if needed
+  await initializeDefaultSkills()
+  
+  // Get skills grouped by category from database
+  const skillsByCategory = await getSkillsByCategory()
+
+  // Define main skill categories for the grid layout with progress bars
+  const mainCategories = [
+    "Programming Languages",
+    "Frameworks & Libraries", 
+    "Cloud & DevOps",
+    "Databases",
+    "Backend Frameworks",
+    "Frontend", 
+    "Frameworks",
+    "Databases & Search"
   ]
 
-  const additionalSkills = [
-    "PostgreSQL",
-    "MySQL",
-    "Oracle DB",
-    "ElasticSearch",
-    "Hibernate",
-    "Python",
-    "Jenkins",
-    "Git",
-    "OAuth2",
-    "JWT",
-    "AES-256 Encryption",
-    "JUnit",
-    "TDD",
-    "Agile/Scrum",
-    "Team Leadership",
-    "Mentoring",
-    "Performance Optimization",
-    "Incident Response",
-    "Cross-team Collaboration",
-    "Cybersecurity Fundamentals",
-    "Telecommunications Network Engineering",
-  ]
+  // Get additional categories (those not in main categories) for the grouped additional skills
+  const additionalCategories = Object.keys(skillsByCategory)
+    .filter(category => !mainCategories.includes(category))
+    .sort()
 
   return (
     <section id="skills" className="py-20 bg-muted/30">
@@ -67,44 +37,77 @@ export function Skills() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8 mb-12">
-          {skillCategories.map((category, index) => (
-            <Card key={index} className="group hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="text-lg">{category.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {category.skills.map((skill, i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">{skill.name}</span>
-                      <span className="text-xs text-muted-foreground">{skill.level}%</span>
-                    </div>
-                    <Progress value={skill.level} className="h-2" />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid lg:grid-cols-2 xl:grid-cols-4 gap-8 mb-12">
+          {mainCategories.map((category) => {
+            const categorySkills = skillsByCategory[category] || []
+            
+            if (categorySkills.length === 0) return null
+
+            return (
+              <Card key={category} className="group hover:shadow-lg transition-all duration-300">
+                <CardHeader>
+                  <CardTitle className="text-lg">{category}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {categorySkills
+                    .sort((a, b) => {
+                      // Sort by proficiency level (Expert > Advanced > Intermediate > Beginner)
+                      const levels = { 'Expert': 4, 'Advanced': 3, 'Intermediate': 2, 'Beginner': 1 };
+                      return (levels[b.proficiency as keyof typeof levels] || 0) - (levels[a.proficiency as keyof typeof levels] || 0);
+                    })
+                    .slice(0, 6) // Show top 6 skills per category
+                    .map((skill) => (
+                      <div key={skill.id} className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">{skill.skill_name}</span>
+                          <span className="text-xs text-muted-foreground">{skill.proficiency}</span>
+                        </div>
+                        <Progress 
+                          value={
+                            skill.proficiency === 'Expert' ? 100 :
+                            skill.proficiency === 'Advanced' ? 75 :
+                            skill.proficiency === 'Intermediate' ? 50 :
+                            25
+                          } 
+                          className="h-2" 
+                        />
+                      </div>
+                    ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Additional Skills & Technologies</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Comprehensive technical expertise across databases, security, testing, and soft skills
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {additionalSkills.map((skill, index) => (
-                <Badge key={index} variant="outline" className="text-sm py-1 px-3">
-                  {skill}
-                </Badge>
-              ))}
+        {additionalCategories.length > 0 && (
+          <div className="space-y-6">
+            <h3 className="text-2xl font-bold text-center">Additional Skills & Technologies</h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {additionalCategories.map((category) => {
+                const categorySkills = skillsByCategory[category] || []
+                
+                if (categorySkills.length === 0) return null
+
+                return (
+                  <Card key={category}>
+                    <CardHeader>
+                      <CardTitle className="text-lg">{category}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {categorySkills.map((skill) => (
+                          <Badge key={skill.id} variant="outline" className="text-sm py-1 px-3">
+                            {skill.skill_name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
       </div>
     </section>
   )

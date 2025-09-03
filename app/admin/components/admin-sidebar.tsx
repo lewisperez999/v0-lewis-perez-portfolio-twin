@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { LayoutDashboard, Database, BarChart3, Settings, FileText, Brain, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, Database, FileText, Brain, LogOut, Menu, X } from "lucide-react"
 import { adminLogout } from "../actions/auth"
 
 const navigation = [
@@ -14,11 +14,6 @@ const navigation = [
     name: "Overview",
     href: "/admin",
     icon: LayoutDashboard,
-  },
-  {
-    name: "Analytics",
-    href: "/admin/analytics",
-    icon: BarChart3,
   },
   {
     name: "Content Management",
@@ -34,11 +29,6 @@ const navigation = [
     name: "Database Operations",
     href: "/admin/database",
     icon: Database,
-  },
-  {
-    name: "System Monitoring",
-    href: "/admin/monitoring",
-    icon: Settings,
   },
 ]
 

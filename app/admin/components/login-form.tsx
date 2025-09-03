@@ -25,7 +25,10 @@ export function LoginForm() {
     try {
       const result = await adminLogin(password)
       if (result.success) {
+        // Add a small delay to ensure cookie is set
+        await new Promise(resolve => setTimeout(resolve, 100))
         router.push("/admin")
+        router.refresh() // Force a refresh to ensure the new cookie is picked up
       } else {
         setError(result.error || "Invalid password")
       }

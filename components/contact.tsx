@@ -33,19 +33,13 @@ export function Contact() {
     {
       icon: Mail,
       label: "Email",
-      value: "lewis@lewisperez.dev",
-      href: "mailto:lewis@lewisperez.dev",
-    },
-    {
-      icon: Phone,
-      label: "Phone",
-      value: "+1 (555) 123-4567",
-      href: "tel:+15551234567",
+      value: "lewisperez12152017@gmail.com",
+      href: "mailto:lewisperez12152017@gmail.com",
     },
     {
       icon: MapPin,
       label: "Location",
-      value: "San Francisco, CA",
+      value: "Melbourne, VIC, Australia",
       href: null,
     },
   ]
@@ -54,18 +48,14 @@ export function Contact() {
     {
       icon: Github,
       label: "GitHub",
-      href: "https://github.com/lewisperez",
+      href: "https://github.com/lewisperez999",
     },
     {
       icon: Linkedin,
       label: "LinkedIn",
       href: "https://linkedin.com/in/lewisperez",
     },
-    {
-      icon: Twitter,
-      label: "Twitter",
-      href: "https://twitter.com/lewisperez",
-    },
+    
   ]
 
   return (
@@ -74,7 +64,7 @@ export function Contact() {
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">Get In Touch</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Ready to work together? Let's discuss your next project
+            Ready to work together? Let&apos;s discuss your next project
           </p>
         </div>
 
@@ -168,7 +158,7 @@ export function Contact() {
               <CardContent className="p-6 text-center">
                 <h3 className="font-semibold mb-2">Ready to collaborate?</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  I'm always open to discussing new opportunities and interesting projects.
+                  I&apos;m always open to discussing new opportunities and interesting projects.
                 </p>
                 <Button variant="outline" className="group bg-transparent">
                   <Mail className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />

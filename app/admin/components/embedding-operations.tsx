@@ -1,65 +1,203 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Play, Pause, Trash2, CheckCircle, AlertCircle, Clock, RefreshCw } from "lucide-react"
-
-interface EmbeddingJob {
-  id: string
-  type: "full_regeneration" | "incremental_update" | "content_chunk" | "cleanup"
-  status: "pending" | "running" | "completed" | "failed"
-  progress: number
-  itemsProcessed: number
-  totalItems: number
-  startTime?: string
-  endTime?: string
-  error?: string
-}
+import { Play, Pause, Trash2, CheckCircle, AlertCircle, Clock, RefreshCw, Zap } from "lucide-react"
+import { 
+  startFullRegeneration, 
+  startIncrementalUpdate, 
+  startVectorCleanup,
+  getEmbeddingJobs,
+  getVectorStats,
+  testVectorSearch,
+  cancelJob,
+  deleteJob,
+  type EmbeddingJob,
+  type VectorStats
+} from "../actions/embeddings"
 
 export function EmbeddingOperations() {
-  const [jobs, setJobs] = useState<EmbeddingJob[]>([
-    {
-      id: "1",
-      type: "full_regeneration",
-      status: "completed",
-      progress: 100,
-      itemsProcessed: 156,
-      totalItems: 156,
-      startTime: "2024-01-15 10:30:00",
-      endTime: "2024-01-15 10:35:22",
-    },
-    {
-      id: "2",
-      type: "incremental_update",
-      status: "running",
-      progress: 65,
-      itemsProcessed: 13,
-      totalItems: 20,
-      startTime: "2024-01-15 14:20:00",
-    },
-  ])
-
+  const [jobs, setJobs] = useState<EmbeddingJob[]>([])
+  const [vectorStats, setVectorStats] = useState<VectorStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null)
 
-  const startFullRegeneration = async () => {
-    setIsGenerating(true)
-    // Simulate job creation
-    const newJob: EmbeddingJob = {
-      id: Date.now().toString(),
-      type: "full_regeneration",
-      status: "pending",
-      progress: 0,
-      itemsProcessed: 0,
-      totalItems: 156,
-      startTime: new Date().toISOString(),
+  // Function to restart polling when new jobs are created
+  const restartPolling = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval)
     }
-    setJobs([newJob, ...jobs])
-    setIsGenerating(false)
+    
+    const interval = setInterval(async () => {
+      try {
+        const currentJobs = await getEmbeddingJobs()
+        setJobs(currentJobs)
+        
+        // Stop polling if no jobs are running
+        const hasRunningJobs = currentJobs.some(job => job.status === "running" || job.status === "pending")
+        if (!hasRunningJobs) {
+          console.log('No running jobs, stopping polling')
+          clearInterval(interval)
+          setPollingInterval(null)
+        }
+      } catch (err) {
+        console.error('Failed to poll jobs:', err)
+      }
+    }, 2000) // Poll every 2 seconds for active jobs
+    
+    setPollingInterval(interval)
+  }
+
+  // Load initial data
+  useEffect(() => {
+    let mounted = true
+
+    const initializeData = async () => {
+      try {
+        setLoading(true)
+        if (mounted) {
+          // Load initial data
+          const [jobsData] = await Promise.all([loadJobs(), loadVectorStats()])
+          
+          // Start polling if there are running jobs
+          const hasRunningJobs = jobsData.some(job => job.status === "running" || job.status === "pending")
+          if (hasRunningJobs) {
+            restartPolling()
+          }
+          
+          setError(null)
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err instanceof Error ? err.message : 'Failed to load data')
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    initializeData()
+    
+    return () => {
+      mounted = false
+      if (pollingInterval) {
+        clearInterval(pollingInterval)
+      }
+    }
+  }, []) // Empty dependency array to run only once
+
+  const loadJobs = async () => {
+    try {
+      const fetchedJobs = await getEmbeddingJobs()
+      setJobs(fetchedJobs)
+      
+      // Check if we need to restart polling for new running jobs
+      const hasRunningJobs = fetchedJobs.some(job => job.status === "running" || job.status === "pending")
+      console.log('Current jobs:', fetchedJobs.length, 'Running:', hasRunningJobs)
+      
+      return fetchedJobs
+    } catch (err) {
+      console.error('Failed to load jobs:', err)
+      return []
+    }
+  }
+
+  const loadVectorStats = async () => {
+    try {
+      const stats = await getVectorStats()
+      setVectorStats(stats)
+    } catch (err) {
+      console.error('Failed to load vector stats:', err)
+    }
+  }
+
+  const handleFullRegeneration = async () => {
+    try {
+      setIsGenerating(true)
+      setError(null)
+      await startFullRegeneration()
+      // Restart polling for the new job
+      await loadJobs()
+      restartPolling()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start full regeneration')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const handleIncrementalUpdate = async () => {
+    try {
+      setError(null)
+      await startIncrementalUpdate()
+      // Restart polling for the new job
+      await loadJobs()
+      restartPolling()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start incremental update')
+    }
+  }
+
+  const handleVectorCleanup = async () => {
+    try {
+      setError(null)
+      await startVectorCleanup()
+      // Restart polling for the new job
+      await loadJobs()
+      restartPolling()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start vector cleanup')
+    }
+  }
+
+  const handleTestSearch = async () => {
+    try {
+      setError(null)
+      const result = await testVectorSearch("software engineer experience")
+      alert(`Search test ${result.success ? 'successful' : 'failed'}!\nQuery: "${result.query}"\nResults: ${result.results}${result.error ? `\nError: ${result.error}` : ''}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to test search')
+    }
+  }
+
+  const handleCancelJob = async (jobId: string) => {
+    try {
+      setError(null)
+      await cancelJob(jobId)
+      // Refresh jobs immediately for this action
+      await loadJobs()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel job')
+    }
+  }
+
+  const handleDeleteJob = async (jobId: string) => {
+    try {
+      setError(null)
+      await deleteJob(jobId)
+      // Refresh jobs immediately for this action
+      await loadJobs()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete job')
+    }
+  }
+
+  const handleRefreshStats = async () => {
+    try {
+      setError(null)
+      await loadVectorStats()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to refresh stats')
+    }
   }
 
   const getStatusIcon = (status: EmbeddingJob["status"]) => {
@@ -92,12 +230,22 @@ export function EmbeddingOperations() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={startFullRegeneration}>
+        <Card 
+          className="cursor-pointer hover:bg-accent transition-colors" 
+          onClick={handleFullRegeneration}
+        >
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <RefreshCw className="h-8 w-8 text-primary" />
+              <RefreshCw className={`h-8 w-8 text-primary ${isGenerating ? 'animate-spin' : ''}`} />
               <div>
                 <h3 className="font-medium">Full Regeneration</h3>
                 <p className="text-sm text-muted-foreground">Rebuild all embeddings</p>
@@ -106,7 +254,10 @@ export function EmbeddingOperations() {
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:bg-accent transition-colors">
+        <Card 
+          className="cursor-pointer hover:bg-accent transition-colors"
+          onClick={handleIncrementalUpdate}
+        >
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
               <Play className="h-8 w-8 text-primary" />
@@ -118,7 +269,10 @@ export function EmbeddingOperations() {
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:bg-accent transition-colors">
+        <Card 
+          className="cursor-pointer hover:bg-accent transition-colors"
+          onClick={handleVectorCleanup}
+        >
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
               <Trash2 className="h-8 w-8 text-primary" />
@@ -130,10 +284,13 @@ export function EmbeddingOperations() {
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:bg-accent transition-colors">
+        <Card 
+          className="cursor-pointer hover:bg-accent transition-colors"
+          onClick={handleTestSearch}
+        >
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <CheckCircle className="h-8 w-8 text-primary" />
+              <Zap className="h-8 w-8 text-primary" />
               <div>
                 <h3 className="font-medium">Test Search</h3>
                 <p className="text-sm text-muted-foreground">Validate functionality</p>
@@ -146,8 +303,27 @@ export function EmbeddingOperations() {
       {/* Current Operations */}
       <Card>
         <CardHeader>
-          <CardTitle>Current Operations</CardTitle>
-          <CardDescription>Active and recent embedding operations</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Current Operations</CardTitle>
+              <CardDescription>Active and recent embedding operations</CardDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={async () => {
+                await loadJobs()
+                const currentJobs = jobs
+                const hasRunningJobs = currentJobs.some(job => job.status === "running" || job.status === "pending")
+                if (hasRunningJobs && !pollingInterval) {
+                  restartPolling()
+                }
+              }}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {jobs.filter((job) => job.status === "running").length > 0 && (
@@ -203,11 +379,19 @@ export function EmbeddingOperations() {
                   <TableCell>
                     <div className="flex gap-2">
                       {job.status === "running" && (
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleCancelJob(job.id)}
+                        >
                           <Pause className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteJob(job.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -222,58 +406,93 @@ export function EmbeddingOperations() {
       {/* Vector Database Status */}
       <Card>
         <CardHeader>
-          <CardTitle>Vector Database Status</CardTitle>
-          <CardDescription>Current state of the embedding storage</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Vector Database Status</CardTitle>
+              <CardDescription>Current state of the embedding storage</CardDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefreshStats}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Total Vectors</span>
-                <Badge variant="secondary">1,247</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Dimensions</span>
-                <Badge variant="secondary">1536</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Storage Used</span>
-                <Badge variant="secondary">12.4 MB</Badge>
-              </div>
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+              Loading vector statistics...
             </div>
+          ) : vectorStats ? (
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Total Vectors</span>
+                  <Badge variant="secondary">{vectorStats.totalVectors.toLocaleString()}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Dimensions</span>
+                  <Badge variant="secondary">{vectorStats.dimensions}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Storage Used</span>
+                  <Badge variant="secondary">{vectorStats.storageUsed}</Badge>
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Last Updated</span>
-                <span className="text-sm text-muted-foreground">2 hours ago</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Last Updated</span>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(vectorStats.lastUpdated).toLocaleTimeString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Index Status</span>
+                  <Badge 
+                    variant="secondary" 
+                    className={
+                      vectorStats.indexStatus === "healthy" 
+                        ? "bg-green-100 text-green-800" 
+                        : vectorStats.indexStatus === "degraded"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                    }
+                  >
+                    {vectorStats.indexStatus}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Avg Query Time</span>
+                  <span className="text-sm text-muted-foreground">{vectorStats.averageQueryTime}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Index Status</span>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  Healthy
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Avg Query Time</span>
-                <span className="text-sm text-muted-foreground">45ms</span>
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Content Chunks</span>
-                <Badge variant="secondary">156</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Categories</span>
-                <Badge variant="secondary">5</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Orphaned Vectors</span>
-                <Badge variant="secondary">0</Badge>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Content Chunks</span>
+                  <Badge variant="secondary">{vectorStats.contentChunks}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Categories</span>
+                  <Badge variant="secondary">{vectorStats.categories}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Orphaned Vectors</span>
+                  <Badge variant="secondary">{vectorStats.orphanedVectors}</Badge>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="text-center p-8 text-muted-foreground">
+              Failed to load vector statistics
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

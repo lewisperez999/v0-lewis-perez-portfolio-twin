@@ -43,6 +43,7 @@
     "@types/pg": "^8.15.5",
     "@upstash/vector": "latest",
     "@vercel/analytics": "latest",
+    "@vercel/speed-insights": "^1.2.0",
     "ai": "latest",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",

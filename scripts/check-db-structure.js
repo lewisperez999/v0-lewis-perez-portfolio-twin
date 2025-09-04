@@ -1,8 +1,8 @@
 const { Pool } = require('pg');
 
-// Use the actual connection string from the .env.local file
+// Use environment variable for database connection
 const pool = new Pool({
-  connectionString: 'postgresql://neondb_owner:npg_rnaqE1f9SVXw@ep-orange-scene-a7a5vm6q-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require',
+  connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 

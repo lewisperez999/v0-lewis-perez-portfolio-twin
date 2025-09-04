@@ -146,7 +146,7 @@ export function AIChat({ className }: AIChatProps) {
 
   return (
     <Card className={cn("w-full max-w-4xl mx-auto h-[600px] flex flex-col", className)}>
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-4 shrink-0">
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5" />
           Chat with Lewis
@@ -157,76 +157,78 @@ export function AIChat({ className }: AIChatProps) {
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 px-6">
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <div key={message.id} className={cn(
-                "flex gap-3",
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              )}>
-                <div className={cn(
-                  "flex gap-3 max-w-[80%]",
-                  message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="h-full overflow-y-auto px-6">
+            <div className="space-y-4 py-4">
+              {messages.map((message) => (
+                <div key={message.id} className={cn(
+                  "flex gap-3",
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
                 )}>
                   <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium",
-                    message.role === 'user' 
-                      ? 'bg-blue-600' 
-                      : 'bg-green-600'
+                    "flex gap-3 max-w-[80%]",
+                    message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                   )}>
-                    {message.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                  </div>
-                  
-                  <div className={cn(
-                    "rounded-lg px-4 py-2 text-sm",
-                    message.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-muted'
-                  )}>
-                    {message.isLoading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                          <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                          <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
-                        </div>
-                        <span className="text-muted-foreground">Thinking...</span>
-                      </div>
-                    ) : (
-                      <div className="whitespace-pre-wrap">{message.content}</div>
-                    )}
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium shrink-0",
+                      message.role === 'user' 
+                        ? 'bg-blue-600' 
+                        : 'bg-green-600'
+                    )}>
+                      {message.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                    </div>
                     
-                    {message.sources && message.sources.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-border/50">
-                        <div className="text-xs text-muted-foreground mb-2 font-medium">
-                          Sources:
+                    <div className={cn(
+                      "rounded-lg px-4 py-2 text-sm break-words overflow-wrap-anywhere min-w-0",
+                      message.role === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-muted'
+                    )}>
+                      {message.isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                            <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                            <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
+                          </div>
+                          <span className="text-muted-foreground">Thinking...</span>
                         </div>
-                        <div className="flex flex-wrap gap-1">
-                          {message.sources.map((source) => (
-                            <Badge 
-                              key={source.id}
-                              variant="outline" 
-                              className="text-xs cursor-pointer hover:bg-muted/50"
-                              title={`Relevance: ${(source.relevanceScore * 100).toFixed(1)}%`}
-                            >
-                              <ExternalLink className="h-2 w-2 mr-1" />
-                              {source.type}: {source.title}
-                            </Badge>
-                          ))}
+                      ) : (
+                        <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere word-break-break-all">{message.content}</div>
+                      )}
+                      
+                      {message.sources && message.sources.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-border/50">
+                          <div className="text-xs text-muted-foreground mb-2 font-medium">
+                            Sources:
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {message.sources.map((source) => (
+                              <Badge 
+                                key={source.id}
+                                variant="outline" 
+                                className="text-xs cursor-pointer hover:bg-muted/50"
+                                title={`Relevance: ${(source.relevanceScore * 100).toFixed(1)}%`}
+                              >
+                                <ExternalLink className="h-2 w-2 mr-1" />
+                                {source.type}: {source.title}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
-        </ScrollArea>
+        </div>
         
         {showSuggestions && (suggestedQuestions.length > 0 || loadingSuggestions) && (
-          <div className="px-6 py-4 border-t bg-muted/30">
+          <div className="px-6 py-4 border-t bg-muted/30 shrink-0">
             <div className="text-sm text-muted-foreground mb-3 font-medium">
               Suggested questions:
             </div>
@@ -243,7 +245,7 @@ export function AIChat({ className }: AIChatProps) {
                     key={index}
                     variant="outline"
                     size="sm"
-                    className="text-left h-auto p-3 text-xs leading-relaxed justify-start whitespace-normal"
+                    className="text-left h-auto p-3 text-xs leading-relaxed justify-start whitespace-normal hover:text-foreground"
                     onClick={() => handleSuggestedQuestion(question)}
                     disabled={isLoading}
                   >
@@ -255,7 +257,7 @@ export function AIChat({ className }: AIChatProps) {
           </div>
         )}
         
-        <div className="p-6 border-t">
+        <div className="p-6 border-t shrink-0">
           <div className="flex gap-2">
             <Input
               ref={inputRef}

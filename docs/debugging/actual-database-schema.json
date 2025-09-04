@@ -1,0 +1,563 @@
+{
+  "skills": {
+    "exists": true,
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "nextval('skills_id_seq'::regclass)",
+        "ordinal_position": 1
+      },
+      {
+        "column_name": "professional_id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "column_name": "category",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "column_name": "skill_name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "column_name": "proficiency",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "column_name": "experience_years",
+        "data_type": "character varying",
+        "character_maximum_length": 20,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "column_name": "context",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "column_name": "projects",
+        "data_type": "ARRAY",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "column_name": "skill_type",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": "'technical'::character varying",
+        "ordinal_position": 9
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 10
+      }
+    ]
+  },
+  "projects": {
+    "exists": true,
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "nextval('projects_id_seq'::regclass)",
+        "ordinal_position": 1
+      },
+      {
+        "column_name": "professional_id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "column_name": "technologies",
+        "data_type": "ARRAY",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "column_name": "role",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "column_name": "outcomes",
+        "data_type": "ARRAY",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "column_name": "challenges",
+        "data_type": "ARRAY",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "column_name": "demo_url",
+        "data_type": "character varying",
+        "character_maximum_length": 500,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "column_name": "repository_url",
+        "data_type": "character varying",
+        "character_maximum_length": 500,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 10
+      },
+      {
+        "column_name": "documentation_url",
+        "data_type": "character varying",
+        "character_maximum_length": 500,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 11
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 12
+      }
+    ]
+  },
+  "experiences": {
+    "exists": true,
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "nextval('experiences_id_seq'::regclass)",
+        "ordinal_position": 1
+      },
+      {
+        "column_name": "professional_id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "column_name": "company",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "column_name": "position",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "column_name": "duration",
+        "data_type": "character varying",
+        "character_maximum_length": 100,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "column_name": "start_date",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "column_name": "end_date",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "column_name": "achievements",
+        "data_type": "ARRAY",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "column_name": "technologies",
+        "data_type": "ARRAY",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 10
+      },
+      {
+        "column_name": "skills_developed",
+        "data_type": "ARRAY",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 11
+      },
+      {
+        "column_name": "impact",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 12
+      },
+      {
+        "column_name": "keywords",
+        "data_type": "ARRAY",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 13
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 14
+      }
+    ]
+  },
+  "personal_info": {
+    "exists": true,
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()",
+        "ordinal_position": 1
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "column_name": "title",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "column_name": "location",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "column_name": "email",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "column_name": "phone",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "column_name": "summary",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "column_name": "bio",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "column_name": "tagline",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "column_name": "highlights",
+        "data_type": "ARRAY",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 10
+      },
+      {
+        "column_name": "website",
+        "data_type": "character varying",
+        "character_maximum_length": 500,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 11
+      },
+      {
+        "column_name": "linkedin",
+        "data_type": "character varying",
+        "character_maximum_length": 500,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 12
+      },
+      {
+        "column_name": "github",
+        "data_type": "character varying",
+        "character_maximum_length": 500,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 13
+      },
+      {
+        "column_name": "twitter",
+        "data_type": "character varying",
+        "character_maximum_length": 500,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 14
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "ordinal_position": 15
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "ordinal_position": 16
+      }
+    ]
+  },
+  "content_chunks": {
+    "exists": true,
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "nextval('content_chunks_id_seq'::regclass)",
+        "ordinal_position": 1
+      },
+      {
+        "column_name": "professional_id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "column_name": "chunk_id",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "column_name": "content",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "column_name": "chunk_type",
+        "data_type": "character varying",
+        "character_maximum_length": 100,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "column_name": "title",
+        "data_type": "character varying",
+        "character_maximum_length": 500,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "column_name": "metadata",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "column_name": "importance",
+        "data_type": "character varying",
+        "character_maximum_length": 20,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "column_name": "date_range",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "column_name": "search_weight",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "5",
+        "ordinal_position": 10
+      },
+      {
+        "column_name": "vector_id",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 11
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 12
+      },
+      {
+        "column_name": "source_file",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 13
+      },
+      {
+        "column_name": "word_count",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 14
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "ordinal_position": 15
+      }
+    ]
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "skills": {
+    "actualColumns": [
+      "id",
+      "professional_id",
+      "category",
+      "skill_name",
+      "proficiency",
+      "experience_years",
+      "context",
+      "projects",
+      "skill_type",
+      "created_at"
+    ],
+    "issues": [
+      "References non-existent column: name",
+      "References non-existent column: proficiency_level",
+      "References non-existent column: description",
+      "References non-existent column: certifications",
+      "SELECT references non-existent column: skill_na"
+    ],
+    "mcpQueries": [
+      "SELECT id, skill_name, category, proficiency, experience_years, context, projects, skill_type FROM skills"
+    ]
+  },
+  "projects": {
+    "actualColumns": [
+      "id",
+      "professional_id",
+      "name",
+      "description",
+      "technologies",
+      "role",
+      "outcomes",
+      "challenges",
+      "demo_url",
+      "repository_url",
+      "documentation_url",
+      "created_at"
+    ],
+    "issues": [
+      "References non-existent column: title",
+      "References non-existent column: github_url"
+    ],
+    "mcpQueries": [
+      "SELECT * FROM projects"
+    ]
+  },
+  "experiences": {
+    "actualColumns": [
+      "id",
+      "professional_id",
+      "company",
+      "position",
+      "duration",
+      "start_date",
+      "end_date",
+      "description",
+      "achievements",
+      "technologies",
+      "skills_developed",
+      "impact",
+      "keywords",
+      "created_at"
+    ],
+    "issues": [],
+    "mcpQueries": [
+      "SELECT * FROM experiences"
+    ]
+  },
+  "personal_info": {
+    "actualColumns": [
+      "id",
+      "name",
+      "title",
+      "location",
+      "email",
+      "phone",
+      "summary",
+      "bio",
+      "tagline",
+      "highlights",
+      "website",
+      "linkedin",
+      "github",
+      "twitter",
+      "created_at",
+      "updated_at"
+    ],
+    "issues": [],
+    "mcpQueries": [
+      "SELECT * FROM personal_info"
+    ]
+  },
+  "content_chunks": {
+    "actualColumns": [
+      "id",
+      "professional_id",
+      "chunk_id",
+      "content",
+      "chunk_type",
+      "title",
+      "metadata",
+      "importance",
+      "date_range",
+      "search_weight",
+      "vector_id",
+      "created_at",
+      "source_file",
+      "word_count",
+      "updated_at"
+    ],
+    "issues": [],
+    "mcpQueries": []
+  }
+}

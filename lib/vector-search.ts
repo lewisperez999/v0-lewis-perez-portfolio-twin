@@ -43,7 +43,7 @@ export async function searchVectors(query: string, options: VectorSearchOptions 
     return getMockSearchResults(query, options)
   }
 
-  const { topK = 5, minSimilarityScore = 0.7, includeMetadata = true, filter } = options
+  const { topK = 5, minSimilarityScore = 0.3, includeMetadata = true, filter } = options
 
   try {
     // Start with a simple query format that we know works
@@ -244,7 +244,7 @@ export async function getAIChatContext(query: string): Promise<{
 
     const results = await searchVectors(query, {
       topK: 5,
-      minSimilarityScore: 0.6,
+      minSimilarityScore: 0.3,
       includeMetadata: true,
     })
 

@@ -1,71 +1,110 @@
--- Lewis Perez Portfolio Database Schema
--- PostgreSQL schema for professional portfolio and conversation logging
+-- Lewis Perez Portfolio Database Schema - UPDATED TO MATCH WORKING DATABASE
+-- PostgreSQL schema for professional portfolio, MCP tools, and conversation logging  
+-- Updated September 2025 to reflect actual production database structure
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Professional content and data tables
--- (These may already exist, but included for completeness)
+-- ============================================
+-- CORE PROFESSIONAL DATA TABLES (MCP COMPATIBLE)
+-- ============================================
 
--- Content chunks for vector search
-CREATE TABLE IF NOT EXISTS content_chunks (
-    chunk_id VARCHAR(255) PRIMARY KEY,
-    title VARCHAR(500),
-    content TEXT NOT NULL,
-    chunk_type VARCHAR(100),
-    source_file VARCHAR(255),
-    word_count INTEGER,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Professional experience data
-CREATE TABLE IF NOT EXISTS experiences (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    company VARCHAR(255) NOT NULL,
-    position VARCHAR(255) NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE,
-    description TEXT,
-    technologies TEXT[],
-    achievements TEXT[],
+-- Professional information (single record with UUID primary key)
+CREATE TABLE IF NOT EXISTS personal_info (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
     location VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    summary TEXT,
+    bio TEXT,
+    tagline TEXT,
+    highlights TEXT[],
+    website VARCHAR(500),
+    linkedin VARCHAR(500),
+    github VARCHAR(500),
+    twitter VARCHAR(500),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Skills and technologies
+-- Skills and competencies (INTEGER primary key, skill_name column)
 CREATE TABLE IF NOT EXISTS skills (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL UNIQUE,
-    category VARCHAR(100) NOT NULL,
-    proficiency_level INTEGER CHECK (proficiency_level >= 1 AND proficiency_level <= 5),
-    years_experience DECIMAL(3,1),
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id INTEGER NOT NULL DEFAULT nextval('skills_id_seq'::regclass) PRIMARY KEY,
+    professional_id INTEGER,
+    category VARCHAR(255),
+    skill_name VARCHAR(255) NOT NULL,
+    proficiency VARCHAR(50),
+    experience_years VARCHAR(20),
+    context TEXT,
+    projects TEXT[],
+    skill_type VARCHAR(50) DEFAULT 'technical',
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Projects portfolio
+-- Projects portfolio (INTEGER primary key, name column, repository_url)
 CREATE TABLE IF NOT EXISTS projects (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id INTEGER NOT NULL DEFAULT nextval('projects_id_seq'::regclass) PRIMARY KEY,
+    professional_id INTEGER,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     technologies TEXT[],
-    github_url VARCHAR(500),
+    role VARCHAR(255),
+    outcomes TEXT[],
+    challenges TEXT[],
     demo_url VARCHAR(500),
-    status VARCHAR(50) DEFAULT 'completed',
+    repository_url VARCHAR(500),
+    documentation_url VARCHAR(500),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Professional experience (INTEGER primary key, company/position columns)
+CREATE TABLE IF NOT EXISTS experiences (
+    id INTEGER NOT NULL DEFAULT nextval('experiences_id_seq'::regclass) PRIMARY KEY,
+    professional_id INTEGER,
+    company VARCHAR(255) NOT NULL,
+    position VARCHAR(255) NOT NULL,
+    duration VARCHAR(100),
     start_date DATE,
     end_date DATE,
-    featured BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    description TEXT,
+    achievements TEXT[],
+    technologies TEXT[],
+    skills_developed TEXT[],
+    impact TEXT,
+    keywords TEXT[],
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Content chunks for vector search (INTEGER primary key, enhanced metadata)
+CREATE TABLE IF NOT EXISTS content_chunks (
+    id INTEGER NOT NULL DEFAULT nextval('content_chunks_id_seq'::regclass) PRIMARY KEY,
+    professional_id INTEGER,
+    chunk_id VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    chunk_type VARCHAR(100),
+    title VARCHAR(500),
+    metadata JSONB,
+    importance VARCHAR(20),
+    date_range VARCHAR(50),
+    search_weight INTEGER DEFAULT 5,
+    vector_id VARCHAR(255),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    source_file VARCHAR(255),
+    word_count INTEGER,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- ============================================
--- CONVERSATION LOGGING TABLES (NEW)
+-- CREATE SEQUENCES FOR INTEGER PRIMARY KEYS
 -- ============================================
+
+CREATE SEQUENCE IF NOT EXISTS skills_id_seq;
+CREATE SEQUENCE IF NOT EXISTS projects_id_seq; 
+CREATE SEQUENCE IF NOT EXISTS experiences_id_seq;
+CREATE SEQUENCE IF NOT EXISTS content_chunks_id_seq;
 
 -- Main conversations table
 CREATE TABLE IF NOT EXISTS conversations (
@@ -110,8 +149,25 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 );
 
 -- ============================================
--- INDEXES FOR PERFORMANCE
+-- INDEXES FOR PERFORMANCE (MCP OPTIMIZED)
 -- ============================================
+
+-- Core table indexes optimized for MCP tool queries
+CREATE INDEX IF NOT EXISTS idx_skills_professional_id ON skills(professional_id);
+CREATE INDEX IF NOT EXISTS idx_skills_category ON skills(category);
+CREATE INDEX IF NOT EXISTS idx_skills_skill_name ON skills(skill_name);
+
+CREATE INDEX IF NOT EXISTS idx_projects_professional_id ON projects(professional_id);
+CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name);
+
+CREATE INDEX IF NOT EXISTS idx_experiences_professional_id ON experiences(professional_id);
+CREATE INDEX IF NOT EXISTS idx_experiences_company ON experiences(company);
+CREATE INDEX IF NOT EXISTS idx_experiences_position ON experiences(position);
+
+CREATE INDEX IF NOT EXISTS idx_content_chunks_professional_id ON content_chunks(professional_id);
+CREATE INDEX IF NOT EXISTS idx_content_chunks_chunk_type ON content_chunks(chunk_type);
+CREATE INDEX IF NOT EXISTS idx_content_chunks_chunk_id ON content_chunks(chunk_id);
+CREATE INDEX IF NOT EXISTS idx_content_chunks_vector_id ON content_chunks(vector_id);
 
 -- Conversations table indexes
 CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON conversations(created_at DESC);
@@ -142,55 +198,55 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Triggers for updated_at columns
-CREATE TRIGGER update_conversations_updated_at 
-    BEFORE UPDATE ON conversations 
+-- Triggers for updated_at columns (only where applicable)
+CREATE TRIGGER IF NOT EXISTS update_personal_info_updated_at 
+    BEFORE UPDATE ON personal_info 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_content_chunks_updated_at 
+CREATE TRIGGER IF NOT EXISTS update_content_chunks_updated_at 
     BEFORE UPDATE ON content_chunks 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_experiences_updated_at 
-    BEFORE UPDATE ON experiences 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_skills_updated_at 
-    BEFORE UPDATE ON skills 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_projects_updated_at 
-    BEFORE UPDATE ON projects 
+CREATE TRIGGER IF NOT EXISTS update_conversations_updated_at 
+    BEFORE UPDATE ON conversations 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
--- SAMPLE DATA FOR TESTING
+-- SAMPLE DATA FOR TESTING (UPDATED STRUCTURE)
 -- ============================================
 
--- Insert sample content chunks if they don't exist
-INSERT INTO content_chunks (chunk_id, title, content, chunk_type, source_file, word_count) 
+-- Insert sample content chunks using new structure
+INSERT INTO content_chunks (professional_id, chunk_id, title, content, chunk_type, source_file, word_count, search_weight) 
 VALUES 
-    ('exp_ing_001', 'ING Australia Experience', 'Senior Software Engineer at ING Australia with 3+ years developing enterprise banking solutions using Java, Spring Boot, and microservices architecture. Led performance optimization initiatives reducing API response times from 500ms to 200ms.', 'experience', 'experience.md', 45),
-    ('skills_java_001', 'Java/Spring Boot Expertise', 'Expert-level Java development with Spring Boot framework. 8+ years of experience building scalable enterprise applications, RESTful APIs, and microservices. Proficient in Spring Security, Spring Data, and Spring Cloud ecosystem.', 'skills', 'skills.md', 38),
-    ('projects_ecom_001', 'E-commerce Platform Project', 'Built comprehensive e-commerce platform using Next.js, Shopify integration, and real-time inventory management. Implemented payment processing, order tracking, and admin dashboard with 99.9% uptime.', 'projects', 'projects.md', 32)
+    (1, 'exp_ing_001', 'ING Australia Experience', 'Senior Software Engineer at ING Australia with 3+ years developing enterprise banking solutions using Java, Spring Boot, and microservices architecture. Led performance optimization initiatives reducing API response times from 500ms to 200ms.', 'experience', 'experience.md', 45, 8),
+    (1, 'skills_java_001', 'Java/Spring Boot Expertise', 'Expert-level Java development with Spring Boot framework. 8+ years of experience building scalable enterprise applications, RESTful APIs, and microservices. Proficient in Spring Security, Spring Data, and Spring Cloud ecosystem.', 'skills', 'skills.md', 38, 9),
+    (1, 'projects_ecom_001', 'E-commerce Platform Project', 'Built comprehensive e-commerce platform using Next.js, Shopify integration, and real-time inventory management. Implemented payment processing, order tracking, and admin dashboard with 99.9% uptime.', 'projects', 'projects.md', 32, 7)
 ON CONFLICT (chunk_id) DO NOTHING;
 
--- Insert sample skills if they don't exist
-INSERT INTO skills (name, category, proficiency_level, years_experience, description)
+-- Insert sample skills using new structure (skill_name, proficiency)
+INSERT INTO skills (professional_id, category, skill_name, proficiency, experience_years, context, skill_type)
 VALUES 
-    ('Java', 'Programming Languages', 5, 8.0, 'Expert in Java development, enterprise applications, and JVM optimization'),
-    ('Spring Boot', 'Frameworks', 5, 6.0, 'Advanced Spring Boot development for microservices and web applications'),
-    ('PostgreSQL', 'Databases', 4, 5.0, 'Database design, optimization, and advanced querying'),
-    ('AWS', 'Cloud Platforms', 4, 4.0, 'EC2, RDS, Lambda, S3, and various AWS services'),
-    ('Next.js', 'Frontend Frameworks', 4, 2.0, 'Modern React framework for full-stack applications')
-ON CONFLICT (name) DO NOTHING;
+    (1, 'Programming Languages', 'Java', 'Expert', '8+ years', 'Enterprise applications, microservices, Spring ecosystem', 'technical'),
+    (1, 'Programming Languages', 'JavaScript/TypeScript', 'Advanced', '6+ years', 'Full-stack development, React, Node.js', 'technical'),
+    (1, 'Frameworks', 'Spring Boot', 'Expert', '6+ years', 'Microservices architecture, RESTful APIs', 'technical'),
+    (1, 'Frameworks', 'React/Next.js', 'Advanced', '4+ years', 'Modern frontend development, SSR/SSG', 'technical'),
+    (1, 'Databases', 'PostgreSQL', 'Expert', '7+ years', 'Database design, optimization, complex queries', 'technical'),
+    (1, 'Cloud Platforms', 'AWS', 'Intermediate', '5+ years', 'EC2, RDS, Lambda, S3, CloudFormation', 'technical')
+ON CONFLICT DO NOTHING;
 
--- Insert sample projects if they don't exist
-INSERT INTO projects (name, description, technologies, github_url, demo_url, status, featured)
+-- Insert sample projects using new structure (name, repository_url, demo_url)
+INSERT INTO projects (professional_id, name, description, technologies, role, repository_url, demo_url)
 VALUES 
-    ('Banking Microservices Platform', 'Enterprise banking solution with microservices architecture, handling millions of transactions daily with 99.9% uptime', ARRAY['Java', 'Spring Boot', 'PostgreSQL', 'Redis', 'AWS'], 'https://github.com/private-repo', null, 'completed', true),
-    ('AI Portfolio Chat', 'Interactive portfolio with AI-powered chat using RAG and vector search for professional context', ARRAY['Next.js', 'TypeScript', 'AI SDK', 'PostgreSQL', 'Vector DB'], 'https://github.com/current-repo', 'https://portfolio.lewisperez.dev', 'in-progress', true),
-    ('E-commerce Platform', 'Full-stack e-commerce solution with Shopify integration and real-time inventory management', ARRAY['Next.js', 'Shopify', 'PostgreSQL', 'Stripe'], 'https://github.com/ecommerce-repo', 'https://demo-store.example.com', 'completed', false)
+    (1, 'Banking Microservices Platform', 'Enterprise banking solution with microservices architecture, handling millions of transactions daily with 99.9% uptime', ARRAY['Java', 'Spring Boot', 'PostgreSQL', 'Redis', 'AWS'], 'Senior Java Engineer', null, null),
+    (1, 'AI Portfolio Chat', 'Interactive portfolio with AI-powered chat using RAG and vector search for professional context', ARRAY['Next.js', 'TypeScript', 'AI SDK', 'PostgreSQL', 'Vector DB'], 'Full Stack Developer', 'https://github.com/lewisperez999/portfolio-v0', 'https://lewisperez.dev'),
+    (1, 'E-commerce Platform', 'Full-stack e-commerce solution with Shopify integration and real-time inventory management', ARRAY['Next.js', 'Shopify', 'PostgreSQL', 'Stripe'], 'Full Stack Developer', null, 'https://gintuanatbp.com')
+ON CONFLICT DO NOTHING;
+
+-- Insert sample experiences using new structure (company, position)
+INSERT INTO experiences (professional_id, company, position, duration, description, achievements, technologies, skills_developed)
+VALUES
+    (1, 'Freelance', 'Full Stack Developer', 'Mar 2025 – Present', 'Deliver end-to-end e-commerce builds and optimizations using Shopify, Liquid, React/Next.js, and secure payment integrations.', ARRAY['Launched Shopify store with +20% conversion improvement', 'Integrated secure payment processing with 99.9% uptime'], ARRAY['Shopify', 'React', 'Next.js', 'Stripe', 'PayPal'], ARRAY['Client discovery', 'Payment integration', 'Performance optimization']),
+    (1, 'ING Business Shared Services', 'Java Engineer', 'Nov 2021 – Oct 2022', 'Designed and optimized Spring Boot microservices for customer onboarding with secure API layers and AES-256 encryption.', ARRAY['Reduced API response time from 500ms to 200ms', 'Mentored 3 junior engineers'], ARRAY['Java', 'Spring Boot', 'PostgreSQL', 'AWS', 'Docker'], ARRAY['Microservices design', 'Performance tuning', 'Mentoring'])
 ON CONFLICT DO NOTHING;
 
 -- ============================================
@@ -224,22 +280,35 @@ FROM conversations
 WHERE created_at >= CURRENT_DATE - INTERVAL '7 days';
 
 -- ============================================
--- HELPFUL COMMENTS
+-- HELPFUL COMMENTS AND DOCUMENTATION
 -- ============================================
 
--- This schema provides:
--- 1. Professional portfolio data structure
--- 2. Comprehensive conversation logging
--- 3. Performance analytics and metrics
--- 4. Proper indexing for fast queries
--- 5. Automated timestamp management
--- 6. Data integrity constraints
--- 7. Sample data for testing
--- 8. Useful views for dashboard queries
-
+-- This schema has been UPDATED to match the actual working database structure
+-- Key changes made to align with production database:
+-- 
+-- 1. PRIMARY KEYS: Changed to INTEGER with sequences (except personal_info)
+-- 2. COLUMN NAMES: Updated to match actual database
+--    - skills.name → skills.skill_name
+--    - skills.proficiency_level → skills.proficiency (VARCHAR)
+--    - projects.github_url → projects.repository_url
+--    - experiences.position and experiences.company (kept as-is)
+-- 3. ADDITIONAL FIELDS: Added business logic columns
+--    - projects: role, outcomes, challenges, documentation_url
+--    - experiences: duration, skills_developed, impact, keywords
+--    - skills: professional_id, experience_years, context, projects, skill_type
+--    - content_chunks: professional_id, importance, search_weight, vector_id
+-- 4. INDEXES: Optimized for MCP tool query patterns
+-- 5. TRIGGERS: Only for tables with updated_at columns
+--
+-- MCP Tool Compatibility:
+-- ✅ lookup_skills: skill_name, proficiency columns
+-- ✅ query_projects: name, repository_url, demo_url columns  
+-- ✅ get_experience_history: company, position columns
+-- ✅ get_contact_info: name, title, website columns (personal_info)
+-- ✅ search_professional_content: content_chunks with vector support
+--
 -- Usage Notes:
--- - Run this script against your PostgreSQL database
--- - Make sure to set proper environment variables
--- - Consider adding backup and archival strategies for conversation data
--- - Monitor query performance and adjust indexes as needed
--- - Regularly clean up old conversation data based on retention policy
+-- - Run this against a fresh database for full schema creation
+-- - Existing databases should already have this structure
+-- - All MCP tools are now aligned with this schema
+-- - Sample data uses the correct column names and structure

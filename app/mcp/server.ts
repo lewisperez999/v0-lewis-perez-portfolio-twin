@@ -73,10 +73,13 @@ export const mcpTools = {
         // Format results based on category filter
         const filteredResults = category === 'all' 
           ? results 
-          : results.filter((r: any) => r.metadata?.category === category);
+          : results.filter((r: any) => {
+              const resultCategory = r.metadata?.category || r.metadata?.chunk_type;
+              return resultCategory === category;
+            });
 
         const formattedResults = filteredResults.map((result: any) => ({
-          content: result.metadata?.content || '',
+          content: result.content || result.metadata?.content || '',
           relevance: result.score,
           metadata: result.metadata,
         }));
@@ -86,7 +89,7 @@ export const mcpTools = {
             {
               type: 'text',
               text: `Found ${formattedResults.length} relevant professional content items:\n\n${formattedResults.map((item: any, index: number) => 
-                `${index + 1}. ${item.content}\n   Relevance: ${(item.relevance * 100).toFixed(1)}%\n   Category: ${item.metadata?.category || 'general'}\n`
+                `${index + 1}. ${item.content}\n   Relevance: ${(item.relevance * 100).toFixed(1)}%\n   Category: ${item.metadata?.category || item.metadata?.chunk_type || 'general'}\n`
               ).join('\n')}`,
             },
           ],
@@ -112,32 +115,42 @@ export const mcpTools = {
       type: 'object',
       properties: {
         technology: { type: 'string', description: 'Filter by technology or tech stack' },
-        type: { 
+        status: { 
           type: 'string', 
-          enum: ['web', 'mobile', 'api', 'database', 'ai/ml', 'other'], 
-          description: 'Project type filter' 
+          enum: ['completed', 'in-progress', 'planned', 'archived'], 
+          description: 'Project status filter' 
         },
+        featured: { type: 'boolean', description: 'Show only featured projects' },
         limit: { type: 'number', default: 10, description: 'Maximum number of projects to return' },
       },
       required: [],
     },
-    handler: async ({ technology, type, limit = 10 }: ProjectQuery) => {
+    handler: async ({ technology, status, featured, limit = 10 }: { technology?: string; status?: string; featured?: boolean; limit?: number }) => {
       try {
         let queryString = 'SELECT * FROM projects WHERE 1=1';
         const params: any[] = [];
         let paramIndex = 1;
 
         if (technology) {
-          queryString += ` AND (technologies ILIKE $${paramIndex} OR description ILIKE $${paramIndex})`;
+          queryString += ` AND (array_to_string(technologies, ',') ILIKE $${paramIndex} OR description ILIKE $${paramIndex})`;
           params.push(`%${technology}%`);
           paramIndex++;
         }
 
-        if (type) {
-          queryString += ` AND project_type = $${paramIndex}`;
-          params.push(type);
+        if (status) {
+          queryString += ` AND status = $${paramIndex}`;
+          params.push(status);
           paramIndex++;
         }
+
+        if (featured !== undefined) {
+          queryString += ` AND featured = $${paramIndex}`;
+          params.push(featured);
+          paramIndex++;
+        }
+
+        // Note: Removed type filter as 'project_type' column doesn't exist in schema
+        // The projects table has: name, description, technologies, repository_url, demo_url, role, etc.
 
         queryString += ` ORDER BY created_at DESC LIMIT $${paramIndex}`;
         params.push(limit);
@@ -156,14 +169,15 @@ export const mcpTools = {
         }
 
         const projects = result.map((project: any) => ({
-          title: project.title,
+          title: project.name,
           description: project.description,
           technologies: project.technologies,
-          type: project.project_type,
-          url: project.project_url,
-          github: project.github_url,
-          status: project.status,
-          featured: project.featured,
+          url: project.demo_url,
+          github: project.repository_url,
+          role: project.role,
+          outcomes: project.outcomes,
+          challenges: project.challenges,
+          documentation: project.documentation_url,
         }));
 
         return {
@@ -171,7 +185,7 @@ export const mcpTools = {
             {
               type: 'text',
               text: `Found ${projects.length} projects:\n\n${projects.map((project: any, index: number) => 
-                `${index + 1}. **${project.title}**\n   ${project.description}\n   Technologies: ${project.technologies}\n   Type: ${project.type}\n   Status: ${project.status}\n   ${project.url ? `URL: ${project.url}` : ''}${project.github ? `\n   GitHub: ${project.github}` : ''}\n`
+                `${index + 1}. **${project.title}**\n   ${project.description}\n   Technologies: ${project.technologies}\n   Role: ${project.role || 'N/A'}\n   ${project.url ? `Demo: ${project.url}` : ''}${project.github ? `\n   GitHub: ${project.github}` : ''}${project.documentation ? `\n   Docs: ${project.documentation}` : ''}\n`
               ).join('\n')}`,
             },
           ],
@@ -214,7 +228,7 @@ export const mcpTools = {
     },
     handler: async ({ skill_type = 'all', proficiency_level = 'all', category }: SkillQuery) => {
       try {
-        let queryString = 'SELECT id, name, category, description FROM skills WHERE 1=1';
+        let queryString = 'SELECT id, skill_name, category, proficiency, experience_years, context, projects, skill_type FROM skills WHERE 1=1';
         const params: any[] = [];
         let paramIndex = 1;
 
@@ -225,12 +239,18 @@ export const mcpTools = {
         }
 
         if (category) {
-          queryString += ` AND (category ILIKE $${paramIndex} OR name ILIKE $${paramIndex})`;
+          queryString += ` AND (category ILIKE $${paramIndex} OR skill_name ILIKE $${paramIndex})`;
           params.push(`%${category}%`);
           paramIndex++;
         }
 
-        queryString += ' ORDER BY name ASC';
+        if (proficiency_level !== 'all') {
+          queryString += ` AND proficiency = $${paramIndex}`;
+          params.push(proficiency_level);
+          paramIndex++;
+        }
+
+        queryString += ' ORDER BY skill_name ASC';
 
         const result = await query(queryString, params);
         
@@ -246,10 +266,13 @@ export const mcpTools = {
         }
 
         const skills = result.map((skill: any) => ({
-          name: skill.name,
+          name: skill.skill_name,
           category: skill.category,
-          description: skill.description,
-          certifications: skill.certifications,
+          proficiency_level: skill.proficiency,
+          experience_years: skill.experience_years,
+          context: skill.context,
+          projects: skill.projects,
+          skill_type: skill.skill_type,
         }));
 
         // Group skills by category for better organization
@@ -265,12 +288,15 @@ export const mcpTools = {
         Object.entries(skillsByCategory).forEach(([categoryName, categorySkills]) => {
           output += `**${categoryName}:**\n`;
           (categorySkills as any[]).forEach((skill: any) => {
-            output += `  • ${skill.name} (${skill.proficiency})`;
-            if (skill.years_experience) {
-              output += ` - ${skill.years_experience} years`;
+            output += `  • ${skill.name}`;
+            if (skill.proficiency_level) {
+              output += ` (${skill.proficiency_level})`;
             }
-            if (skill.certifications) {
-              output += ` - Certified: ${skill.certifications}`;
+            if (skill.experience_years) {
+              output += ` - ${skill.experience_years} experience`;
+            }
+            if (skill.context) {
+              output += ` - ${skill.context}`;
             }
             output += '\n';
           });
@@ -341,15 +367,14 @@ export const mcpTools = {
         }
 
         const experiences = result.map((exp: any) => ({
-          title: exp.job_title,
-          company: exp.company_name,
+          title: exp.position,
+          company: exp.company,
           location: exp.location,
           startDate: exp.start_date,
           endDate: exp.end_date,
           description: exp.description,
           achievements: exp.achievements,
           technologies: exp.technologies,
-          type: exp.employment_type,
         }));
 
         let output = '';
@@ -363,7 +388,7 @@ export const mcpTools = {
                 : `${exp.startDate} - Present`;
               
               output += `${index + 1}. **${exp.title}** at **${exp.company}**\n`;
-              output += `   ${duration} | ${exp.location} | ${exp.type}\n`;
+              output += `   ${duration} | ${exp.location}\n`;
               
               if (include_details && exp.description) {
                 output += `   ${exp.description}\n`;
@@ -469,17 +494,17 @@ export const mcpTools = {
         switch (format) {
           case 'business':
             output = `Professional Contact Information\n\n`;
-            output += `Name: ${info.full_name}\n`;
-            output += `Title: ${info.professional_title}\n`;
+            output += `Name: ${info.name}\n`;
+            output += `Title: ${info.title}\n`;
             output += `Email: ${info.email}\n`;
             if (info.phone) output += `Phone: ${info.phone}\n`;
             if (info.location) output += `Location: ${info.location}\n`;
-            if (info.website_url) output += `Website: ${info.website_url}\n`;
+            if (info.website) output += `Website: ${info.website}\n`;
             break;
 
           case 'casual':
-            output = `Hi! I'm ${info.full_name}\n`;
-            output += `${info.bio || info.professional_title}\n\n`;
+            output = `Hi! I'm ${info.name}\n`;
+            output += `${info.bio || info.title}\n\n`;
             output += `📧 ${info.email}\n`;
             if (info.phone) output += `📱 ${info.phone}\n`;
             if (info.location) output += `📍 ${info.location}\n`;
@@ -487,11 +512,11 @@ export const mcpTools = {
 
           default: // standard
             output = `Contact Information:\n\n`;
-            output += `Name: ${info.full_name}\n`;
+            output += `Name: ${info.name}\n`;
             output += `Email: ${info.email}\n`;
             if (info.phone) output += `Phone: ${info.phone}\n`;
             if (info.location) output += `Location: ${info.location}\n`;
-            if (info.professional_title) output += `Title: ${info.professional_title}\n`;
+            if (info.title) output += `Title: ${info.title}\n`;
         }
 
         if (include_social) {
@@ -499,7 +524,7 @@ export const mcpTools = {
           if (info.linkedin_url) output += `• LinkedIn: ${info.linkedin_url}\n`;
           if (info.github_url) output += `• GitHub: ${info.github_url}\n`;
           if (info.twitter_url) output += `• Twitter: ${info.twitter_url}\n`;
-          if (info.website_url) output += `• Website: ${info.website_url}\n`;
+          if (info.website) output += `• Website: ${info.website}\n`;
         }
 
         return {

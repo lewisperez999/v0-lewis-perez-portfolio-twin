@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "sonner"
 import { Suspense } from "react"
 import "./globals.css"
 
@@ -27,6 +28,7 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
         </Suspense>
+        <Toaster richColors position="top-right" />
         <Analytics />
         <SpeedInsights />
       </body>

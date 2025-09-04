@@ -11,6 +11,7 @@
 - **Vector Search Integration**: Semantic search through professional content using Upstash Vector
 - **Real-time Streaming Responses**: Powered by Vercel AI SDK with configurable AI models
 - **Comprehensive Portfolio**: Experience, skills, projects, and contact information
+- **Contact Form with Email**: Resend API integration with toast notifications for enhanced user feedback
 - **Modern Tech Stack**: Next.js 15, TypeScript, Tailwind CSS, shadcn/ui
 - **Conversation Persistence**: Chat history management with PostgreSQL
 - **Source Attribution**: AI responses include relevant source references
@@ -24,6 +25,8 @@
 - **AI**: Vercel AI SDK with configurable models (default: OpenAI GPT-4o)
 - **Vector Database**: Upstash Vector (1024-dimension embeddings)
 - **Database**: PostgreSQL with comprehensive professional data schema
+- **Email**: Resend API for contact form with Sonner toast notifications
+- **Notifications**: Modern toast system for user feedback and status updates
 - **Deployment**: Vercel
 
 ## 📚 AI Chat Capabilities
@@ -63,6 +66,11 @@ UPSTASH_VECTOR_REST_TOKEN=your_upstash_token
 
 # Optional - AI Model Configuration
 AI_MODEL=openai/gpt-4o
+
+# Optional - Contact Form (Resend)
+RESEND_API_KEY=re_your_resend_api_key
+RESEND_FROM_EMAIL=contact@yourdomain.com
+RESEND_TO_EMAIL=your-email@gmail.com
 \`\`\`
 
 ### AI Model Configuration
@@ -103,6 +111,25 @@ psql -d your_database_url -f database/schema.sql
 1. Create Upstash Vector database with 1024 dimensions
 2. Use the scripts in `scripts/database/` to populate embeddings
 3. Verify setup with `scripts/database/final-verification.js`
+
+### Contact Form Setup (Optional)
+
+The contact form features modern toast notifications for enhanced user experience:
+- **Loading notifications** during form submission
+- **Success notifications** with confirmation messages  
+- **Error notifications** with specific failure details
+- **Form state management** with loading indicators and input validation
+
+Setup steps:
+1. Sign up at [resend.com](https://resend.com)
+2. Verify your domain or use test domain for development
+3. Add environment variables to `.env.local`:
+   ```bash
+   RESEND_API_KEY=re_your_api_key
+   RESEND_FROM_EMAIL=contact@yourdomain.com
+   RESEND_TO_EMAIL=your-email@gmail.com
+   ```
+4. The contact form will work in fallback mode without these settings
 
 ### Local Development
 

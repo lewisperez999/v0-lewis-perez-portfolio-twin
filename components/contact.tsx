@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Mail, Phone, MapPin, Github, Linkedin, Twitter } from "lucide-react"
+import { Mail, Phone, MapPin, Github, Linkedin, Twitter, Send } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 
 export function Contact() {
   const [formData, setFormData] = useState({
@@ -15,11 +16,56 @@ export function Contact() {
     email: "",
     message: "",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission here
-    console.log("Form submitted:", formData)
+    setIsSubmitting(true)
+
+    // Show loading toast
+    const loadingToast = toast.loading('Sending your message...', {
+      description: 'Please wait while we process your request.',
+    })
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const result = await response.json()
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast)
+
+      if (result.success) {
+        toast.success('Message sent successfully!', {
+          description: 'Thank you for your message. I will get back to you soon.',
+          duration: 5000,
+        })
+        // Reset form on success
+        setFormData({ name: '', email: '', message: '' })
+      } else {
+        toast.error('Failed to send message', {
+          description: result.message || 'Please try again or contact me directly.',
+          duration: 5000,
+        })
+      }
+    } catch (error) {
+      console.error('Form submission error:', error)
+      // Dismiss loading toast
+      toast.dismiss(loadingToast)
+      
+      toast.error('Network error', {
+        description: 'Please check your connection and try again.',
+        duration: 5000,
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -77,7 +123,14 @@ export function Contact() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Input name="name" placeholder="Your Name" value={formData.name} onChange={handleChange} required />
+                  <Input 
+                    name="name" 
+                    placeholder="Your Name" 
+                    value={formData.name} 
+                    onChange={handleChange} 
+                    disabled={isSubmitting}
+                    required 
+                  />
                 </div>
                 <div>
                   <Input
@@ -86,6 +139,7 @@ export function Contact() {
                     placeholder="Your Email"
                     value={formData.email}
                     onChange={handleChange}
+                    disabled={isSubmitting}
                     required
                   />
                 </div>
@@ -96,11 +150,22 @@ export function Contact() {
                     rows={5}
                     value={formData.message}
                     onChange={handleChange}
+                    disabled={isSubmitting}
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full">
-                  Send Message
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Send Message
+                    </>
+                  )}
                 </Button>
               </form>
             </CardContent>

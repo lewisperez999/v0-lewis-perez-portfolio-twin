@@ -102,6 +102,7 @@ The system follows a modern **JAMstack architecture** with:
 - **TypeScript**: Type-safe development with strict configuration
 - **Tailwind CSS**: Utility-first CSS framework for responsive design
 - **shadcn/ui**: High-quality React components built on Radix UI
+- **Sonner**: Modern toast notification library for user feedback
 - **Geist Font**: Modern typography from Vercel
 
 ### Backend Technologies
@@ -109,6 +110,10 @@ The system follows a modern **JAMstack architecture** with:
 - **Server Actions**: Next.js native server-side functions
 - **API Routes**: RESTful API endpoints for external integrations
 - **Zod**: Runtime type validation and schema parsing
+
+### Communication & Email
+- **Resend**: Modern email API for transactional emails
+- **HTML/Text Templates**: Rich email formatting with fallback support
 
 ### Database & Storage
 - **PostgreSQL**: Primary relational database for structured data
@@ -234,6 +239,25 @@ v0-lewis-perez-portfolio-twin/
 - Message history and context management
 - Source attribution for AI responses
 - Suggested questions and input validation
+
+#### **Contact Component** (`contact.tsx`)
+- Professional contact form with email integration via Resend API
+- Real-time form validation with browser built-ins
+- Toast notifications with Sonner for enhanced user feedback
+- Loading states with spinner and disabled inputs during submission
+- Automatic form reset on successful message delivery
+- Accessibility compliance with proper labels and ARIA attributes
+
+**Contact Form Features:**
+- **Email Integration**: Powered by Resend API with HTML/text templates
+- **Fallback Handling**: Graceful degradation when email service unavailable
+- **Toast Notifications**: 
+  - Loading toast during submission ("Sending your message...")
+  - Success toast with green checkmark (5-second duration)
+  - Error toast with specific error details and retry guidance
+- **Form States**: Default → Submitting → Success/Error with visual feedback
+- **Input Validation**: Required field validation and email format checking
+- **Error Recovery**: Form preservation on errors to enable easy retry
 
 ### 2. Admin System (`/app/admin`)
 
@@ -640,6 +664,24 @@ getSystemHealth(): Promise<HealthStatus>
 ```
 
 ### API Routes (`/app/api/`)
+
+#### **Contact Form** (`/api/contact`)
+```typescript
+POST /api/contact
+// Handles contact form submissions via Resend API
+{
+  name: string,
+  email: string,
+  message: string
+}
+
+Response:
+{
+  success: boolean,
+  message: string,
+  emailId?: string  // Resend email ID if successful
+}
+```
 
 #### **Health Check** (`/api/health`)
 ```typescript

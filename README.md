@@ -1,6 +1,29 @@
 # Lewis Perez AI-Powered Portfolio
 
-*Professional portfolio website with integrated AI chat assistant*
+*Professional portfolio website with# Optional - AI Chat Configuration
+CONVERSATION_LIMIT=6
+ENABLE_CONVERSATION_SUMMARY=true
+```
+
+### AI Chat Memory Configuration
+
+The AI chat system maintains conversation continuity through intelligent memory management:
+
+**Message Limits:**
+- `CONVERSATION_LIMIT` (default: 6) - Number of recent messages kept in full
+- Range: 2-50 messages for optimal performance
+
+**Conversation Continuity:**
+- `ENABLE_CONVERSATION_SUMMARY=true` - Automatically summarizes older messages
+- When conversation exceeds limit, older messages are summarized instead of dropped
+- Maintains context without losing conversation history
+
+**How It Works:**
+1. Recent messages (within limit) are kept in full detail
+2. Older messages are summarized using AI for context preservation
+3. Summary is integrated into system prompt for seamless continuity
+
+See [`docs/AI_CHAT_CONFIGURATION.md`](docs/AI_CHAT_CONFIGURATION.md) for detailed configuration options and [`docs/CONVERSATION_CONTINUITY.md`](docs/CONVERSATION_CONTINUITY.md) for continuity management details.I chat assistant*
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/lewis-perezs-projects/v0-lewis-perez-portfolio)
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/UttepYdpR7w)
@@ -71,7 +94,20 @@ AI_MODEL=openai/gpt-4o
 RESEND_API_KEY=re_your_resend_api_key
 RESEND_FROM_EMAIL=contact@yourdomain.com
 RESEND_TO_EMAIL=your-email@gmail.com
+
+# Optional - AI Chat Configuration
+CONVERSATION_LIMIT=6
 \`\`\`
+
+### AI Chat Memory Configuration
+
+The `CONVERSATION_LIMIT` environment variable controls how many previous messages the AI chat remembers:
+
+- **Default: 6** - Balanced performance and memory (3 user + 3 AI messages)
+- **Range: 2-50** - Minimum 2, maximum 50 messages
+- **Impact**: Higher values = better conversation continuity but slower responses and higher costs
+
+See [`docs/AI_CHAT_CONFIGURATION.md`](docs/AI_CHAT_CONFIGURATION.md) for detailed configuration options.
 
 ### AI Model Configuration
 

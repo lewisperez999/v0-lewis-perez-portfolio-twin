@@ -4,6 +4,235 @@ import { z } from 'zod';
 import { query } from '@/lib/database';
 import { searchVectors } from '@/lib/vector-search';
 
+// Import enhanced chat functionality
+import { generateAIResponse, type Message } from '@/app/actions/chat';
+
+// Helper functions for AI chat conversation
+async function createOrUpdateSession(sessionId: string, conversationType: string, persona?: string, aiModel?: string) {
+  try {
+    // Check if session exists
+    const existingSession = await query('SELECT session_id FROM ai_chat_sessions WHERE session_id = $1', [sessionId]);
+    
+    if (existingSession.length === 0) {
+      // Create new session
+      await query(`
+        INSERT INTO ai_chat_sessions (session_id, conversation_type, persona, ai_model, metadata)
+        VALUES ($1, $2, $3, $4, $5)
+      `, [
+        sessionId,
+        conversationType,
+        persona || 'curious_explorer',
+        aiModel || 'openai/gpt-4o',
+        JSON.stringify({ created_via: 'mcp_tool' })
+      ]);
+    } else {
+      // Update existing session
+      await query(`
+        UPDATE ai_chat_sessions 
+        SET last_activity = NOW(), message_count = message_count + 1
+        WHERE session_id = $1
+      `, [sessionId]);
+    }
+  } catch (error) {
+    console.error('Error managing session:', error);
+    // Continue anyway - don't fail the conversation
+  }
+}
+
+async function getAIChatHistory(sessionId: string): Promise<Message[]> {
+  try {
+    const result = await query(`
+      SELECT user_message, ai_response, created_at
+      FROM conversations 
+      WHERE session_id = $1 
+      ORDER BY created_at ASC
+      LIMIT 20
+    `, [sessionId]);
+    
+    const messages: Message[] = [];
+    result.forEach((row: any) => {
+      messages.push({
+        id: `user_${row.created_at}`,
+        role: 'user',
+        content: row.user_message,
+        timestamp: new Date(row.created_at)
+      });
+      messages.push({
+        id: `assistant_${row.created_at}`,
+        role: 'assistant',
+        content: row.ai_response,
+        timestamp: new Date(row.created_at)
+      });
+    });
+    
+    return messages;
+  } catch (error) {
+    console.error('Error retrieving chat history:', error);
+    return [];
+  }
+}
+
+function enhanceMessageWithPersona(message: string, persona?: string, conversationType?: string, context?: string): string {
+  const personaEnhancements = {
+    interviewer: "You are being interviewed by a professional recruiter. Provide detailed, specific examples of your experience and achievements. Be professional but personable.",
+    technical_assessor: "You are being assessed by a senior technical expert. Provide deep technical details, explain your decision-making process, and demonstrate your technical expertise.",
+    curious_explorer: "You are talking with someone genuinely interested in learning about your professional journey. Be open, share insights, and provide context for your experiences.",
+    analyst: "You are being analyzed by a professional analyst. Provide comprehensive information that allows for thorough evaluation of your skills, experience, and professional trajectory."
+  };
+  
+  let enhancedMessage = message;
+  
+  if (context) {
+    enhancedMessage = `Context: ${context}\n\nQuestion: ${message}`;
+  }
+  
+  if (persona && personaEnhancements[persona as keyof typeof personaEnhancements]) {
+    enhancedMessage = `${personaEnhancements[persona as keyof typeof personaEnhancements]}\n\n${enhancedMessage}`;
+  }
+  
+  return enhancedMessage;
+}
+
+async function updateConversationHistory(sessionId: string, userMessage: string, aiResponse: string): Promise<Message[]> {
+  // The conversation is already logged by generateAIResponse, so we just need to return the updated history
+  return await getAIChatHistory(sessionId);
+}
+
+async function generateFollowUpQuestions(response: string, conversationType: string, persona?: string): Promise<string[]> {
+  const followUpPatterns = {
+    interview: [
+      "Can you give me a specific example of when you...",
+      "How did you handle the situation when...",
+      "What was the outcome of...",
+      "Tell me about a time when you faced..."
+    ],
+    assessment: [
+      "What were the technical challenges with...",
+      "How did you optimize...",
+      "What alternatives did you consider for...",
+      "Walk me through your approach to..."
+    ],
+    exploration: [
+      "That's interesting, can you tell me more about...",
+      "What led you to...",
+      "How did that experience shape...",
+      "What did you learn from..."
+    ],
+    analysis: [
+      "Based on your experience, how would you evaluate...",
+      "What patterns do you see in...",
+      "How has your approach evolved...",
+      "What metrics would you use to measure..."
+    ]
+  };
+  
+  const patterns = followUpPatterns[conversationType as keyof typeof followUpPatterns] || followUpPatterns.exploration;
+  
+  // Extract key topics from the response to create contextual follow-ups
+  const topics = extractTopics(response);
+  const technologies = extractTechnologies(response);
+  
+  const suggestions: string[] = [];
+  
+  // Add topic-based follow-ups
+  if (topics.length > 0) {
+    suggestions.push(`${patterns[0]} ${topics[0]}?`);
+  }
+  
+  // Add technology-based follow-ups
+  if (technologies.length > 0) {
+    suggestions.push(`${patterns[1]} ${technologies[0]}?`);
+  }
+  
+  // Add a general follow-up
+  suggestions.push(patterns[2]);
+  
+  return suggestions.slice(0, 3);
+}
+
+async function logAIConversationAnalytics(sessionId: string, analytics: any) {
+  try {
+    await query(`
+      INSERT INTO ai_conversation_analytics (
+        session_id, conversation_turn, question_type, response_quality_score,
+        technical_depth_score, topics_mentioned, technologies_discussed,
+        sources_utilized, response_time_ms
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `, [
+      sessionId,
+      analytics.conversation_turn,
+      analytics.question_type,
+      analytics.response_quality_score,
+      analytics.technical_depth_score,
+      analytics.topics_mentioned,
+      analytics.technologies_discussed,
+      analytics.sources_utilized,
+      analytics.response_time_ms
+    ]);
+  } catch (error) {
+    console.error('Error logging analytics:', error);
+    // Continue anyway - don't fail the conversation
+  }
+}
+
+function extractTopics(text: string): string[] {
+  // Simple topic extraction - could be enhanced with NLP
+  const topicKeywords = [
+    'java', 'spring', 'microservices', 'database', 'api', 'performance', 'optimization',
+    'architecture', 'design', 'development', 'testing', 'deployment', 'cloud', 'aws',
+    'docker', 'kubernetes', 'postgresql', 'elasticsearch', 'monitoring', 'leadership',
+    'team', 'project', 'agile', 'scrum', 'devops', 'ci/cd', 'automation'
+  ];
+  
+  const found = topicKeywords.filter(keyword => 
+    text.toLowerCase().includes(keyword.toLowerCase())
+  );
+  
+  return found.slice(0, 5); // Return top 5 topics
+}
+
+function extractTechnologies(text: string): string[] {
+  // Extract technology mentions
+  const techKeywords = [
+    'Java', 'Spring Boot', 'PostgreSQL', 'ElasticSearch', 'Docker', 'Kubernetes',
+    'AWS', 'React', 'TypeScript', 'Node.js', 'Python', 'REST', 'GraphQL',
+    'Redis', 'MongoDB', 'MySQL', 'Jenkins', 'Git', 'Jira', 'Maven', 'Gradle'
+  ];
+  
+  const found = techKeywords.filter(tech => 
+    text.includes(tech)
+  );
+  
+  return found.slice(0, 5); // Return top 5 technologies
+}
+
+function formatAIConversationResponse(aiResponse: any, options: any): string {
+  const { sessionId, conversationType, persona, responseFormat, followUpQuestions, conversationTurn } = options;
+  
+  let formatted = `**AI Portfolio Response** (Turn ${conversationTurn})\n\n`;
+  formatted += `${aiResponse.response}\n\n`;
+  
+  if (aiResponse.sources && aiResponse.sources.length > 0) {
+    formatted += `**Sources Consulted:**\n`;
+    aiResponse.sources.forEach((source: any, index: number) => {
+      formatted += `${index + 1}. ${source.title || source.type} (Relevance: ${(source.relevanceScore * 100).toFixed(1)}%)\n`;
+    });
+    formatted += '\n';
+  }
+  
+  if (followUpQuestions && followUpQuestions.length > 0) {
+    formatted += `**Suggested Follow-up Questions:**\n`;
+    followUpQuestions.forEach((question: string, index: number) => {
+      formatted += `${index + 1}. ${question}\n`;
+    });
+    formatted += '\n';
+  }
+  
+  formatted += `*Session: ${sessionId} | Type: ${conversationType} | Persona: ${persona || 'default'}*`;
+  
+  return formatted;
+}
+
 // Define types for our tools
 type SearchQuery = {
   query: string;
@@ -32,6 +261,19 @@ type ExperienceQuery = {
 type ContactQuery = {
   include_social?: boolean;
   format?: 'standard' | 'business' | 'casual';
+};
+
+type AIChatQuery = {
+  session_id?: string;
+  conversation_type: 'interview' | 'assessment' | 'exploration' | 'analysis';
+  message: string;
+  context?: string;
+  persona?: 'interviewer' | 'technical_assessor' | 'curious_explorer' | 'analyst';
+  ai_model?: string;
+  include_sources?: boolean;
+  start_new_session?: boolean;
+  max_conversation_length?: number;
+  response_format?: 'detailed' | 'concise' | 'technical' | 'conversational';
 };
 
 // Tool definitions
@@ -542,6 +784,143 @@ export const mcpTools = {
             {
               type: 'text',
               text: `Error getting contact information: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  },
+
+  ai_chat_conversation: {
+    name: 'ai_chat_conversation',
+    description: 'Have a conversation with Lewis Perez\'s AI portfolio system. Enables structured interviews, assessments, and interactive exploration.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: { type: 'string', description: 'Optional session ID to continue existing conversation' },
+        conversation_type: { 
+          type: 'string', 
+          enum: ['interview', 'assessment', 'exploration', 'analysis'], 
+          description: 'Type of conversation to conduct' 
+        },
+        message: { type: 'string', description: 'Message to send to the AI', minLength: 1, maxLength: 2000 },
+        context: { type: 'string', description: 'Additional context for the conversation' },
+        persona: { 
+          type: 'string', 
+          enum: ['interviewer', 'technical_assessor', 'curious_explorer', 'analyst'], 
+          description: 'Conversation persona to adopt' 
+        },
+        ai_model: { type: 'string', description: 'Specify AI model to use (e.g., "openai/gpt-4o")' },
+        include_sources: { type: 'boolean', default: true, description: 'Include source citations in response' },
+        start_new_session: { type: 'boolean', default: false, description: 'Force start a new conversation session' },
+        max_conversation_length: { type: 'number', minimum: 2, maximum: 100, description: 'Maximum conversation turns' },
+        response_format: { 
+          type: 'string', 
+          enum: ['detailed', 'concise', 'technical', 'conversational'], 
+          default: 'detailed', 
+          description: 'Response formatting style' 
+        }
+      },
+      required: ['conversation_type', 'message'],
+    },
+    handler: async ({ 
+      session_id, 
+      conversation_type, 
+      message, 
+      context, 
+      persona, 
+      ai_model, 
+      include_sources = true, 
+      start_new_session = false, 
+      max_conversation_length, 
+      response_format = 'detailed' 
+    }: AIChatQuery) => {
+      const startTime = Date.now();
+      
+      try {
+        // Generate or use session ID
+        const sessionId = start_new_session 
+          ? `ai_chat_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+          : (session_id || `ai_chat_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`);
+
+        // Create session if it doesn't exist
+        await createOrUpdateSession(sessionId, conversation_type, persona, ai_model);
+
+        // Retrieve conversation history
+        const conversationHistory = await getAIChatHistory(sessionId);
+
+        // Enhance message with persona context
+        const enhancedMessage = enhanceMessageWithPersona(message, persona, conversation_type, context);
+
+        // Generate AI response using existing chat system
+        const aiResponse = await generateAIResponse(
+          enhancedMessage,
+          conversationHistory,
+          sessionId,
+          {
+            model: ai_model,
+            includeSources: include_sources,
+            responseFormat: response_format,
+            maxLength: max_conversation_length
+          }
+        );
+
+        // Update conversation history
+        const updatedHistory = await updateConversationHistory(sessionId, enhancedMessage, aiResponse.response);
+
+        // Generate follow-up suggestions
+        const followUpQuestions = await generateFollowUpQuestions(aiResponse.response, conversation_type, persona);
+
+        // Calculate session metrics
+        const responseTime = Date.now() - startTime;
+        await logAIConversationAnalytics(sessionId, {
+          conversation_turn: updatedHistory.length,
+          question_type: conversation_type,
+          response_quality_score: 0.9, // Placeholder - could be calculated
+          technical_depth_score: 0.8,  // Placeholder - could be calculated
+          topics_mentioned: extractTopics(aiResponse.response),
+          technologies_discussed: extractTechnologies(aiResponse.response),
+          sources_utilized: aiResponse.sources?.length || 0,
+          response_time_ms: responseTime
+        });
+
+        // Format response
+        return {
+          content: [
+            {
+              type: 'text',
+              text: formatAIConversationResponse(aiResponse, {
+                sessionId,
+                conversationType: conversation_type,
+                persona,
+                responseFormat: response_format,
+                followUpQuestions,
+                conversationTurn: updatedHistory.length
+              })
+            }
+          ],
+          metadata: {
+            session_id: sessionId,
+            conversation_type,
+            persona,
+            response_time_ms: responseTime,
+            model_used: ai_model || 'default',
+            conversation_turn: updatedHistory.length,
+            sources_consulted: aiResponse.sources?.length || 0,
+            session_status: {
+              is_active: true,
+              can_continue: updatedHistory.length < (max_conversation_length || 20),
+              suggested_next_questions: followUpQuestions
+            }
+          }
+        };
+      } catch (error) {
+        console.error('Error in AI chat conversation:', error);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error in AI conversation: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or start a new session.`,
             },
           ],
         };

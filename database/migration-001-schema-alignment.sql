@@ -174,7 +174,69 @@ WHERE name IN ('Banking Microservices Platform', 'AI Portfolio Chat')
 AND featured = false;
 
 -- ============================================
--- 8. CLEANUP (OPTIONAL)
+-- 8. AI CHAT TABLES FOR MCP INTEGRATION
+-- ============================================
+
+-- AI Chat Sessions Table for session management
+CREATE TABLE IF NOT EXISTS ai_chat_sessions (
+    session_id VARCHAR(255) PRIMARY KEY,
+    conversation_type VARCHAR(50) NOT NULL CHECK (conversation_type IN ('interview', 'assessment', 'exploration', 'analysis')),
+    persona VARCHAR(50) CHECK (persona IN ('interviewer', 'technical_assessor', 'curious_explorer', 'analyst')),
+    ai_model VARCHAR(100) DEFAULT 'openai/gpt-4o-mini',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_activity TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    message_count INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    metadata JSONB DEFAULT '{}'
+);
+
+-- AI Conversation Analytics Table
+CREATE TABLE IF NOT EXISTS ai_conversation_analytics (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    session_id VARCHAR(255) REFERENCES ai_chat_sessions(session_id) ON DELETE CASCADE,
+    conversation_turn INTEGER NOT NULL,
+    question_type VARCHAR(100),
+    response_quality_score DECIMAL(3,2) CHECK (response_quality_score >= 0 AND response_quality_score <= 1),
+    technical_depth_score DECIMAL(3,2) CHECK (technical_depth_score >= 0 AND technical_depth_score <= 1),
+    topics_mentioned TEXT[],
+    technologies_discussed TEXT[],
+    sources_utilized JSONB DEFAULT '[]',
+    response_time_ms INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Conversation Comparisons Table for A/B testing
+CREATE TABLE IF NOT EXISTS conversation_comparisons (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    session_a VARCHAR(255) REFERENCES ai_chat_sessions(session_id),
+    session_b VARCHAR(255) REFERENCES ai_chat_sessions(session_id),
+    comparison_type VARCHAR(50) NOT NULL,
+    quality_difference DECIMAL(3,2),
+    engagement_score DECIMAL(3,2),
+    insights JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT different_sessions CHECK (session_a != session_b)
+);
+
+-- Indexes for AI Chat Tables
+CREATE INDEX IF NOT EXISTS idx_ai_chat_sessions_type ON ai_chat_sessions(conversation_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_chat_sessions_persona ON ai_chat_sessions(persona, last_activity DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_chat_sessions_active ON ai_chat_sessions(is_active, last_activity DESC);
+
+CREATE INDEX IF NOT EXISTS idx_ai_analytics_session ON ai_conversation_analytics(session_id, conversation_turn);
+CREATE INDEX IF NOT EXISTS idx_ai_analytics_scores ON ai_conversation_analytics(response_quality_score DESC, technical_depth_score DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_analytics_topics ON ai_conversation_analytics USING GIN(topics_mentioned);
+CREATE INDEX IF NOT EXISTS idx_ai_analytics_tech ON ai_conversation_analytics USING GIN(technologies_discussed);
+
+CREATE INDEX IF NOT EXISTS idx_conversation_comparisons_type ON conversation_comparisons(comparison_type, created_at DESC);
+
+-- Triggers for AI Chat Tables
+CREATE TRIGGER update_ai_chat_sessions_activity 
+    BEFORE UPDATE ON ai_chat_sessions 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- 9. CLEANUP (OPTIONAL)
 -- ============================================
 
 -- Note: Uncomment these if you want to remove old columns after migration

@@ -48,10 +48,25 @@ const ChatSessionSchema = z.object({
 
 export type ChatSession = z.infer<typeof ChatSessionSchema>
 
+// Enhanced options for AI response generation
+interface AIResponseOptions {
+  model?: string
+  includeSources?: boolean
+  responseFormat?: "detailed" | "concise" | "technical" | "conversational"
+  maxLength?: number
+  personaEnhancement?: string
+}
+
 /**
  * Generate AI response with RAG context
+ * Enhanced for MCP AI-to-AI conversations while maintaining backward compatibility
  */
-export async function generateAIResponse(userMessage: string, conversationHistory: Message[] = []) {
+export async function generateAIResponse(
+  userMessage: string, 
+  conversationHistory: Message[] = [],
+  sessionId?: string,
+  options?: AIResponseOptions
+) {
   const startTime = Date.now()
   
   try {
@@ -83,7 +98,7 @@ export async function generateAIResponse(userMessage: string, conversationHistor
         mockResult.response, 
         "answered", 
         responseTime,
-        undefined, // sessionId - could be added later
+        sessionId, // Use provided session ID or undefined for backward compatibility
         "mock-response", // modelUsed
         sources, // vectorSources
         context // contextUsed
@@ -98,19 +113,24 @@ export async function generateAIResponse(userMessage: string, conversationHistor
       const { generateText } = await import("ai")
 
       result = await generateText({
-        model: getAIModel(),
-        messages: buildMessages(userMessage, conversationHistory, context),
+        model: options?.model || getAIModel(), // Use provided model or default
+        messages: await buildMessages(userMessage, conversationHistory, context, options?.personaEnhancement),
         temperature: 0.7,
       })
 
       const response = {
         response: result.text,
-        sources: sources.map((s) => ({
+        sources: options?.includeSources !== false ? sources.map((s) => ({
           id: s.id,
           title: s.metadata?.title || s.metadata?.chunk_type || "Professional Content",
           type: s.metadata?.chunk_type || "content",
           relevanceScore: s.score,
-        })),
+        })) : [],
+        metadata: {
+          model: options?.model || getAIModel(),
+          responseFormat: options?.responseFormat || "detailed",
+          sessionId: sessionId
+        }
       }
 
       // Log successful conversation with enhanced database logging
@@ -120,8 +140,8 @@ export async function generateAIResponse(userMessage: string, conversationHistor
         result.text, 
         "answered", 
         responseTime,
-        undefined, // sessionId - could be added later
-        getAIModel(), // modelUsed
+        sessionId, // Use provided session ID or undefined for backward compatibility
+        options?.model || getAIModel(), // modelUsed
         sources, // vectorSources
         context // contextUsed
       )
@@ -167,8 +187,68 @@ export async function generateAIResponse(userMessage: string, conversationHistor
   }
 }
 
-function buildMessages(userMessage: string, conversationHistory: Message[], context: string) {
-  const systemPrompt = `You are Lewis Perez, a Senior Software Engineer with 8+ years of experience. You are responding to questions about your professional background, skills, and experience.
+/**
+ * Create a summary of older conversation messages to maintain context
+ */
+async function createConversationSummary(messages: Message[]): Promise<string> {
+  try {
+    if (messages.length === 0) return ""
+
+    // Check if conversation summary is enabled
+    const summaryEnabled = process.env.ENABLE_CONVERSATION_SUMMARY?.toLowerCase() === 'true'
+    if (!summaryEnabled) {
+      return "Previous conversation covered professional background topics."
+    }
+
+    // Try AI-powered summarization if available
+    if (process.env.AI_GATEWAY_API_KEY) {
+      try {
+        const { generateText } = await import("ai")
+        
+        const conversationText = messages
+          .map(msg => `${msg.role}: ${msg.content}`)
+          .join('\n')
+          .slice(0, 2000) // Limit input size
+
+        const result = await generateText({
+          model: getAIModel(),
+          prompt: `Summarize this conversation between a user and Lewis Perez (Software Engineer) in 2-3 sentences, focusing on key topics discussed and main points covered. Keep it concise and relevant for maintaining conversation context.
+
+Conversation:
+${conversationText}`,
+          temperature: 0.3,
+        })
+
+        return result.text.slice(0, 300) // Limit summary length
+      } catch (error) {
+        console.log('AI summarization failed, using fallback:', error)
+      }
+    }
+
+    // Fallback to simple summarization
+    const userQuestions = messages
+      .filter(msg => msg.role === 'user')
+      .map(msg => msg.content)
+      .slice(0, 5) // Limit to first 5 questions for summary
+
+    const assistantResponses = messages
+      .filter(msg => msg.role === 'assistant')
+      .map(msg => msg.content.slice(0, 200)) // First 200 chars of each response
+      .slice(0, 3) // Limit to first 3 responses
+
+    // Simple summary generation
+    const topics = userQuestions.join(', ')
+    const keyPoints = assistantResponses.join(' ... ')
+
+    return `Topics discussed: ${topics}. Key points covered: ${keyPoints.slice(0, 500)}...`
+  } catch (error) {
+    console.error('Error creating conversation summary:', error)
+    return "Previous conversation covered professional background and experience."
+  }
+}
+
+async function buildMessages(userMessage: string, conversationHistory: Message[], context: string, personaEnhancement?: string) {
+  let systemPrompt = `You are Lewis Perez, a Senior Software Engineer with 8+ years of experience. You are responding to questions about your professional background, skills, and experience.
 
 IMPORTANT GUIDELINES:
 - Always respond in first person as Lewis Perez
@@ -184,9 +264,49 @@ ${context}
 
 If the context doesn't contain relevant information for the question, politely explain what you can help with based on your actual experience in software engineering, particularly in Java/Spring Boot, database optimization, and enterprise system development.`
 
+  // Add persona enhancement if provided (for AI-to-AI conversations)
+  if (personaEnhancement) {
+    systemPrompt += `\n\nADDITIONAL CONTEXT: ${personaEnhancement}`
+  }
+
+  // Get conversation limit from environment variable with fallback to 6
+  const conversationLimit = parseInt(process.env.CONVERSATION_LIMIT || "6", 10)
+  
+  // Ensure the limit is reasonable (between 2 and 50)
+  const safeLimit = Math.max(2, Math.min(conversationLimit, 50))
+  
+  console.log(`Using conversation limit: ${safeLimit} messages`)
+
+  // Handle conversation continuity when limit is exceeded
+  let messagesToInclude = conversationHistory
+  let conversationSummary = ""
+
+  if (conversationHistory.length > safeLimit) {
+    // Get older messages that will be truncated
+    const olderMessages = conversationHistory.slice(0, -(safeLimit - 1))
+    const recentMessages = conversationHistory.slice(-(safeLimit - 1))
+
+    // Create summary of older conversation
+    if (olderMessages.length > 0) {
+      conversationSummary = await createConversationSummary(olderMessages)
+    }
+
+    messagesToInclude = recentMessages
+  }
+
+  // Build system prompt with conversation summary if available
+  const enhancedSystemPrompt = conversationSummary 
+    ? `${systemPrompt}
+
+CONVERSATION CONTEXT:
+Earlier in our conversation, we discussed: ${conversationSummary}
+
+Please maintain continuity with this previous conversation context while responding to the current question.`
+    : systemPrompt
+
   return [
-    { role: "system" as const, content: systemPrompt },
-    ...conversationHistory.slice(-6).map((msg) => ({
+    { role: "system" as const, content: enhancedSystemPrompt },
+    ...messagesToInclude.map((msg) => ({
       role: msg.role as "user" | "assistant",
       content: msg.content,
     })),

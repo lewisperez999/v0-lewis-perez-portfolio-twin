@@ -1,21 +1,24 @@
-# Lewis Perez AI-Powered Portfolio - High Level Design Document
+# Lewis Perez Portfolio - Comprehensive System Design & Architecture
+
+**Version:** 2.0  
+**Date:** September 6, 2025  
+**Comprehensive Documentation:** High Level Design, Architecture, Analytics, Security  
+
+---
 
 ## Table of Contents
 1. [System Overview](#system-overview)
-2. [Architecture Diagram](#architecture-diagram)
-3. [Technology Stack](#technology-stack)
-4. [Directory Structure](#directory-structure)
-5. [Core Components](#core-components)
-6. [Data Flow Diagrams](#data-flow-diagrams)
-7. [Database Architecture](#database-architecture)
-8. [AI & Vector Search System](#ai--vector-search-system)
-9. [Admin System](#admin-system)
-10. [MCP Server Architecture](#mcp-server-architecture)
-11. [API Design](#api-design)
-12. [Analytics Implementation](#analytics-implementation)
-13. [Security Considerations](#security-considerations)
-14. [Performance & Scalability](#performance--scalability)
-15. [Deployment Architecture](#deployment-architecture)
+2. [Architecture & Technology Stack](#architecture--technology-stack)
+3. [Core Components & Features](#core-components--features)
+4. [Database Architecture](#database-architecture)
+5. [AI & Vector Search System](#ai--vector-search-system)
+6. [Conversation Continuity System](#conversation-continuity-system)
+7. [Admin System & Content Management](#admin-system--content-management)
+8. [Analytics & Performance Monitoring](#analytics--performance-monitoring)
+9. [Security & Privacy](#security--privacy)
+10. [API Design & Integration](#api-design--integration)
+11. [Deployment & Infrastructure](#deployment--infrastructure)
+12. [Performance & Scalability](#performance--scalability)
 
 ---
 
@@ -46,7 +49,9 @@ The system follows a modern **JAMstack architecture** with:
 
 ---
 
-## Architecture Diagram
+## Architecture & Technology Stack
+
+### System Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -94,11 +99,9 @@ The system follows a modern **JAMstack architecture** with:
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
----
+### Technology Stack
 
-## Technology Stack
-
-### Frontend Technologies
+#### **Frontend Technologies**
 - **Next.js 15**: React framework with App Router for modern SSR/SSG
 - **React 19**: Latest React features with improved concurrent rendering
 - **TypeScript**: Type-safe development with strict configuration
@@ -107,42 +110,44 @@ The system follows a modern **JAMstack architecture** with:
 - **Sonner**: Modern toast notification library for user feedback
 - **Geist Font**: Modern typography from Vercel
 
-### Backend Technologies
+#### **Backend Technologies**
 - **Node.js**: JavaScript runtime for server-side logic
 - **Server Actions**: Next.js native server-side functions
 - **API Routes**: RESTful API endpoints for external integrations
 - **Zod**: Runtime type validation and schema parsing
 
-### Communication & Email
+#### **Communication & Email**
 - **Resend**: Modern email API for transactional emails
 - **HTML/Text Templates**: Rich email formatting with fallback support
 
-### Database & Storage
+#### **Database & Storage**
 - **PostgreSQL**: Primary relational database for structured data
 - **Upstash Vector**: Vector database for semantic search capabilities
 - **Redis** (via Upstash): Caching layer for performance optimization
 
-### AI & Machine Learning
+#### **AI & Machine Learning**
 - **Vercel AI SDK**: Framework for AI integration and streaming
 - **Multiple AI Providers**: OpenAI, Anthropic, Meta LLaMA, Google Gemini
 - **Vector Embeddings**: OpenAI text-embedding-3-small (1024 dimensions)
 - **RAG (Retrieval-Augmented Generation)**: Context-aware AI responses
 
-### Development & Deployment
+#### **Development & Deployment**
 - **Vercel**: Primary deployment platform with edge optimization
 - **GitHub**: Version control and CI/CD integration
 - **pnpm**: Fast, disk space efficient package manager
 - **ESLint**: Code linting and quality assurance
 - **PostCSS**: CSS processing and optimization
 
-### Analytics & Performance Monitoring
+#### **Analytics & Performance Monitoring**
 - **Vercel Analytics**: Real-time usage analytics and user behavior insights
 - **Vercel Speed Insights**: Core Web Vitals monitoring and performance optimization
 - **Custom Analytics**: Conversation tracking and AI interaction metrics
 
 ---
 
-## Directory Structure
+## Core Components & Features
+
+### Directory Structure
 
 ```
 v0-lewis-perez-portfolio-twin/
@@ -190,21 +195,9 @@ v0-lewis-perez-portfolio-twin/
 │   ├── schema-actual.sql
 │   └── schema.sql              # Main database schema
 ├── docs/                       # Documentation
-│   ├── debugging/              # Debug documentation
-│   ├── AI_CHAT_CONFIGURATION.md   # AI chat configuration guide
-│   ├── CONVERSATION_CONTINUITY.md # Conversation continuity management
-│   ├── EMBEDDING_SETUP.md      # Vector embedding setup
-│   ├── MCP_ARCHITECTURE_DESIGN.md
-│   ├── MCP_SERVER_DOCS.md      # MCP server documentation
-│   └── [other documentation files]
 ├── public/                     # Static assets
-│   ├── placeholder-logo.png
-│   ├── placeholder-user.jpg
-│   └── [other static assets]
 ├── scripts/                    # Utility scripts
-│   └── run-migration.js        # Database migration runner
 ├── styles/                     # Additional stylesheets
-│   └── globals.css
 ├── package.json                # Dependencies and scripts
 ├── next.config.mjs             # Next.js configuration
 ├── tailwind.config.js          # Tailwind CSS configuration
@@ -212,11 +205,7 @@ v0-lewis-perez-portfolio-twin/
 └── components.json             # shadcn/ui configuration
 ```
 
----
-
-## Core Components
-
-### 1. Portfolio Components (`/components`)
+### Portfolio Components
 
 #### **Hero Component** (`hero.tsx`)
 - Professional introduction and key messaging
@@ -265,131 +254,6 @@ v0-lewis-perez-portfolio-twin/
 - **Form States**: Default → Submitting → Success/Error with visual feedback
 - **Input Validation**: Required field validation and email format checking
 - **Error Recovery**: Form preservation on errors to enable easy retry
-
-### 2. Admin System (`/app/admin`)
-
-#### **Admin Dashboard** (`page.tsx`)
-- System health monitoring and metrics
-- Conversation analytics and user insights
-- Quick access to management tools
-
-#### **Content Management**
-- Content chunks editor for vector search optimization
-- Experience, skills, and projects management
-- Personal information and contact details editor
-
-#### **Database Management**
-- Schema information and table statistics
-- Database operations and maintenance tools
-- Migration management and backup utilities
-
-#### **Analytics & Monitoring**
-- Conversation logs and success rates
-- Vector search performance metrics
-- System health checks and diagnostics
-
----
-
-## Data Flow Diagrams
-
-### AI Chat Interaction Flow
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Input    │───▶│   Input         │───▶│   Vector        │
-│   (Question)    │    │   Validation    │    │   Search        │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                       │
-┌─────────────────┐    ┌─────────────────┐           ▼
-│   AI Response   │◀───│   AI Model      │    ┌─────────────────┐
-│   (Streaming)   │    │   Processing    │◀───│   Context       │
-└─────────────────┘    └─────────────────┘    │   Retrieval     │
-         │                                    └─────────────────┘
-         ▼                                             │
-┌─────────────────┐    ┌─────────────────┐           ▼
-│   Response      │◀───│   Conversation  │    ┌─────────────────┐
-│   Display       │    │   Logging       │◀───│   Database      │
-└─────────────────┘    └─────────────────┘    │   Storage       │
-                                              └─────────────────┘
-                                                       │
-                                                       ▼
-                                              ┌─────────────────┐
-                                              │   Conversation  │
-                                              │   Continuity    │
-                                              │   Management    │
-                                              └─────────────────┘
-```
-
-### Conversation Continuity Flow
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Check Message │───▶│   Exceeds       │───▶│   Split         │
-│   History Count │    │   Limit?        │    │   Messages      │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │                       │
-                                │ NO                    │ YES
-                                ▼                       ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │   Use Full      │    │   Summarize     │
-                       │   History       │    │   Older Messages│
-                       └─────────────────┘    └─────────────────┘
-                                │                       │
-                                │                       ▼
-                                │              ┌─────────────────┐
-                                │              │   AI-Powered    │
-                                │              │   Summary or    │
-                                │              │   Fallback      │
-                                │              └─────────────────┘
-                                │                       │
-                                ▼                       ▼
-                       ┌─────────────────────────────────────────┐
-                       │   Enhanced System Prompt with Context  │
-                       │   (Full History or Summary + Recent)   │
-                       └─────────────────────────────────────────┘
-```
-
-### Admin Content Management Flow
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Admin User    │───▶│   Authentication│───▶│   Dashboard     │
-│   Access        │    │   Check         │    │   Access        │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                       │
-┌─────────────────┐    ┌─────────────────┐           ▼
-│   Database      │◀───│   CRUD          │    ┌─────────────────┐
-│   Updates       │    │   Operations    │◀───│   Content       │
-└─────────────────┘    └─────────────────┘    │   Management    │
-         │                                    └─────────────────┘
-         ▼                                             │
-┌─────────────────┐    ┌─────────────────┐           ▼
-│   Vector DB     │◀───│   Embedding     │    ┌─────────────────┐
-│   Sync          │    │   Generation    │◀───│   Content       │
-└─────────────────┘    └─────────────────┘    │   Changes       │
-                                              └─────────────────┘
-```
-
-### MCP Server Data Access Flow
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   MCP Client    │───▶│   Tool Request  │───▶│   Input         │
-│   (External)    │    │   Parsing       │    │   Validation    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                       │
-┌─────────────────┐    ┌─────────────────┐           ▼
-│   Formatted     │◀───│   Response      │    ┌─────────────────┐
-│   Response      │    │   Generation    │◀───│   Database      │
-└─────────────────┘    └─────────────────┘    │   Query         │
-                                              └─────────────────┘
-                                                       │
-                                                       ▼
-                                              ┌─────────────────┐
-                                              │   Vector Search │
-                                              │   (Optional)    │
-                                              └─────────────────┘
-```
 
 ---
 
@@ -595,48 +459,84 @@ The AI chat system implements intelligent conversation continuity management to 
 - **Cost Optimization**: Reduced token usage = lower API costs
 - **Memory Management**: Efficient browser memory usage
 
-### Usage Patterns
+### Data Flow Diagrams
 
-#### **Short Conversations (≤6 messages)**
+#### **AI Chat Interaction Flow**
+
 ```
-[System Prompt] + [Full Message History] + [Current Message]
+User                AI Chat               Vector Search         Database              AI Model
+ │                    │                        │                   │                    │
+ │ 1. Enter Question  │                        │                   │                    │
+ ├──────────────────▶ │                        │                   │                    │
+ │                    │ 2. Check History Limit │                   │                    │
+ │                    ├────────────┐           │                   │                    │
+ │                    │            │           │                   │                    │
+ │                    │◀───────────┘           │                   │                    │
+ │                    │ 3. Summarize if needed │                   │                    │
+ │                    ├──────────────────────────────────────────────────────────────▶ │
+ │                    │                        │                   │ 3a. Generate Summary│
+ │                    │ ◀──────────────────────────────────────────────────────────────┤
+ │                    │ 4. Validate Input      │                   │                    │
+ │                    ├────────────┐           │                   │                    │
+ │                    │            │           │                   │                    │
+ │                    │◀───────────┘           │                   │                    │
+ │                    │ 5. Search Context      │                   │                    │
+ │                    ├──────────────────────▶ │                   │                    │
+ │                    │                        │ 6. Query Embeddings│                   │
+ │                    │                        ├─────────────────▶ │                    │
+ │                    │                        │                   │ 7. Return Content │
+ │                    │                        │ ◀─────────────────┤                   │
+ │                    │ 8. Return Context      │                   │                    │
+ │                    │ ◀──────────────────────┤                   │                    │
+ │                    │ 9. Build Enhanced      │                   │                    │
+ │                    │    Prompt w/ Summary   │                   │                    │
+ │                    ├────────────┐           │                   │                    │
+ │                    │            │           │                   │                    │
+ │                    │◀───────────┘           │                   │                    │
+ │                    │ 10. Generate Response  │                   │                    │
+ │                    ├──────────────────────────────────────────────────────────────▶ │
+ │                    │                        │                   │ 11. Stream Response│
+ │                    │ ◀──────────────────────────────────────────────────────────────┤
+ │ 12. Display        │                        │                   │                    │
+ │     Response       │                        │                   │                    │
+ │ ◀──────────────────┤                        │                   │                    │
+ │                    │ 13. Log Conversation   │                   │                    │
+ │                    ├──────────────────────────────────────────▶ │                    │
+ │                    │                        │                   │                    │
 ```
 
-#### **Long Conversations (>6 messages)**
+#### **Conversation Continuity Flow**
+
 ```
-[Enhanced System Prompt with Summary] + [Recent 6 Messages] + [Current Message]
-
-Where Enhanced System Prompt includes:
-"Earlier in our conversation, we discussed: [AI-Generated Summary]"
-```
-
-### Example Implementation
-
-```typescript
-// Conversation continuity logic
-if (conversationHistory.length > safeLimit) {
-  const olderMessages = conversationHistory.slice(0, -(safeLimit - 1))
-  const recentMessages = conversationHistory.slice(-(safeLimit - 1))
-  
-  // Generate summary of older messages
-  const summary = await createConversationSummary(olderMessages)
-  
-  // Build enhanced system prompt
-  const enhancedPrompt = `${basePrompt}
-
-CONVERSATION CONTEXT:
-Earlier in our conversation, we discussed: ${summary}
-
-Please maintain continuity with this previous conversation context.`
-  
-  // Use recent messages + summary
-  messagesToInclude = recentMessages
-}
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Check Message │───▶│   Exceeds       │───▶│   Split         │
+│   History Count │    │   Limit?        │    │   Messages      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │                       │
+                                │ NO                    │ YES
+                                ▼                       ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │   Use Full      │    │   Summarize     │
+                       │   History       │    │   Older Messages│
+                       └─────────────────┘    └─────────────────┘
+                                │                       │
+                                │                       ▼
+                                │              ┌─────────────────┐
+                                │              │   AI-Powered    │
+                                │              │   Summary or    │
+                                │              │   Fallback      │
+                                │              └─────────────────┘
+                                │                       │
+                                ▼                       ▼
+                       ┌─────────────────────────────────────────┐
+                       │   Enhanced System Prompt with Context  │
+                       │   (Full History or Summary + Recent)   │
+                       └─────────────────────────────────────────┘
 ```
 
 ---
 
-## Admin System
+## Admin System & Content Management
 
 ### Admin Architecture Overview
 
@@ -693,100 +593,122 @@ The admin system provides comprehensive management capabilities for all aspects 
 
 ---
 
-## MCP Server Architecture
+## Analytics & Performance Monitoring
 
-### Model Context Protocol Overview
+### Vercel Analytics & Speed Insights Integration
 
-The MCP (Model Context Protocol) server provides structured access to professional portfolio data for external AI systems and applications.
+The application implements comprehensive analytics and performance monitoring through Vercel's integrated analytics platform.
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     MCP SERVER ARCHITECTURE                            │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
-│  │   Tool          │  │   Database      │  │   Vector        │         │
-│  │   Registry      │  │   Queries       │  │   Search        │         │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
-│           │                     │                     │                │
-│           ▼                     ▼                     ▼                │
-│  ┌─────────────────────────────────────────────────────────────────────┤
-│  │                    AVAILABLE TOOLS                                  │
-│  │                                                                     │
-│  │  • search_professional_content    • lookup_skills                  │
-│  │  • query_projects                 • get_experience_history         │
-│  │  • get_contact_info                                                 │
-│  └─────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┤
-│  │                     TOOL CAPABILITIES                              │
-│  │                                                                     │
-│  │  • Semantic search through professional content                    │
-│  │  • Filtered queries by content type and importance                 │
-│  │  • Skills lookup with proficiency and experience filters           │
-│  │  • Project filtering by technology and status                      │
-│  │  • Experience history with customizable formatting                 │
-│  │  • Contact information with privacy controls                       │
-│  └─────────────────────────────────────────────────────────────────────┘
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+#### **Analytics Components** (`app/layout.tsx`)
+```tsx
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
-### MCP Tools and Capabilities
-
-#### **1. search_professional_content**
-```typescript
-// Search through all professional content with semantic matching
-{
-  query: string,              // Search query
-  limit?: number,             // Max results (default: 10)
-  category?: 'all' | 'experience' | 'projects' | 'skills' | 'education'
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+        <Analytics />           {/* User behavior and traffic analytics */}
+        <SpeedInsights />       {/* Core Web Vitals and performance metrics */}
+      </body>
+    </html>
+  )
 }
 ```
 
-#### **2. query_projects**
+#### **Analytics Capabilities**
+
+**Vercel Analytics Features:**
+- **Page Views**: Track visitor traffic and popular content
+- **User Sessions**: Understand user engagement patterns
+- **Referrer Tracking**: Identify traffic sources and marketing effectiveness
+- **Geographic Analytics**: User location and regional performance insights
+- **Device Analytics**: Browser, device, and OS usage patterns
+
+**Speed Insights Features:**
+- **Core Web Vitals**: LCP, FID, CLS monitoring and optimization
+- **Real User Monitoring (RUM)**: Actual user performance data
+- **Performance Insights**: Page load times and optimization recommendations
+- **Field Data**: Real-world performance across different devices and networks
+- **Lighthouse Integration**: Automated performance auditing
+
+#### **Custom Analytics Integration**
+
+The system also implements custom analytics for AI-specific features:
+
 ```typescript
-// Filter and retrieve project information
-{
-  technology?: string,        // Filter by tech stack
-  status?: 'completed' | 'in-progress' | 'planned' | 'archived',
-  featured?: boolean,         // Featured projects only
-  limit?: number              // Max results
-}
+// Conversation analytics from chat.ts
+await logConversation(
+  userMessage, 
+  result.text, 
+  "answered", 
+  responseTime,
+  sessionId,
+  modelUsed,
+  vectorSources,
+  contextUsed
+)
 ```
 
-#### **3. lookup_skills**
-```typescript
-// Retrieve skills with advanced filtering
-{
-  skill_type?: 'technical' | 'soft' | 'language' | 'certification' | 'all',
-  proficiency_level?: 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'all',
-  category?: string           // Specific skill category
-}
-```
+**Custom Metrics Tracked:**
+- AI chat interactions and success rates
+- Vector search performance and relevance scores
+- User engagement with different portfolio sections
+- Admin dashboard usage and content management activities
 
-#### **4. get_experience_history**
-```typescript
-// Retrieve work experience with formatting options
-{
-  include_details?: boolean,  // Include descriptions and achievements
-  format?: 'chronological' | 'skills_based' | 'summary',
-  years?: number              // Limit to recent years
-}
-```
+#### **Privacy & Compliance**
 
-#### **5. get_contact_info**
+- **GDPR Compliant**: Analytics collection respects user privacy preferences
+- **No Personal Data**: User identification is session-based, not personally identifiable
+- **Opt-out Capable**: Analytics can be disabled through user preferences
+- **Data Retention**: Follows Vercel's data retention policies
+
+---
+
+## Security & Privacy
+
+### Authentication & Authorization
+- **Admin Access**: Environment-based authentication for admin functions
+- **Session Management**: Secure session handling with HTTP-only cookies
+- **Rate Limiting**: API endpoint protection against abuse
+- **Input Validation**: Comprehensive input sanitization with Zod schemas
+
+### Data Protection
+- **Database Security**: SSL connections and credential encryption
+- **Vector Search**: Secured API tokens for Upstash Vector
+- **AI Model Access**: Protected API keys for AI service providers
+- **Environment Variables**: Secure configuration management
+
+### Privacy & Compliance
+- **User Data**: Minimal collection with optional session tracking
+- **Conversation Logs**: Anonymized storage with IP address hashing
+- **GDPR Compliance**: Data retention policies and deletion capabilities
+- **Analytics**: Privacy-focused metrics without personal identification
+
+### Security Headers & Policies
 ```typescript
-// Retrieve contact information with privacy controls
+// Next.js security configuration
 {
-  include_social?: boolean,   // Include social media links
-  format?: 'standard' | 'business' | 'casual'
+  headers: [
+    {
+      source: '/(.*)',
+      headers: [
+        { key: 'X-Frame-Options', value: 'DENY' },
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
+        { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' }
+      ]
+    }
+  ]
 }
 ```
 
 ---
 
-## API Design
+## API Design & Integration
 
 ### Server Actions (`/app/actions/`)
 
@@ -865,118 +787,64 @@ GET /api/debug/ai-models
 
 ---
 
-## Analytics Implementation
+## Deployment & Infrastructure
 
-### Vercel Analytics & Speed Insights Integration
+### Vercel Platform Deployment
 
-The application implements comprehensive analytics and performance monitoring through Vercel's integrated analytics platform.
-
-#### **Analytics Components** (`app/layout.tsx`)
-```tsx
-import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from "@vercel/speed-insights/next"
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
-        <Analytics />           {/* User behavior and traffic analytics */}
-        <SpeedInsights />       {/* Core Web Vitals and performance metrics */}
-      </body>
-    </html>
-  )
-}
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        VERCEL EDGE NETWORK                             │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
+│  │   Static        │  │   API Routes    │  │   Server        │         │
+│  │   Assets        │  │   (Serverless)  │  │   Actions       │         │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
+│                                                                         │
+└─────────────────────┬───────────────────────────────────────────────────┘
+                      │
+┌─────────────────────┴───────────────────────────────────────────────────┐
+│                      EXTERNAL SERVICES                                 │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
+│  │   PostgreSQL    │  │   Upstash       │  │   AI Models     │         │
+│  │   (Hosted)      │  │   Vector/Redis  │  │   (Various)     │         │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### **Analytics Capabilities**
+### Environment Configuration
 
-**Vercel Analytics Features:**
-- **Page Views**: Track visitor traffic and popular content
-- **User Sessions**: Understand user engagement patterns
-- **Referrer Tracking**: Identify traffic sources and marketing effectiveness
-- **Geographic Analytics**: User location and regional performance insights
-- **Device Analytics**: Browser, device, and OS usage patterns
+#### **Required Environment Variables**
+```bash
+# Core Services
+AI_GATEWAY_API_KEY=vck-your_vercel_consumer_key
+DATABASE_URL=postgresql://username:password@host:port/database
+UPSTASH_VECTOR_REST_URL=https://your-vector-db.upstash.io
+UPSTASH_VECTOR_REST_TOKEN=your_upstash_token
 
-**Speed Insights Features:**
-- **Core Web Vitals**: LCP, FID, CLS monitoring and optimization
-- **Real User Monitoring (RUM)**: Actual user performance data
-- **Performance Insights**: Page load times and optimization recommendations
-- **Field Data**: Real-world performance across different devices and networks
-- **Lighthouse Integration**: Automated performance auditing
+# AI Chat Configuration
+AI_MODEL=openai/gpt-4o
+CONVERSATION_LIMIT=6
+ENABLE_CONVERSATION_SUMMARY=true
 
-#### **Custom Analytics Integration**
+# Communication
+RESEND_API_KEY=re_your_resend_api_key
+CONTACT_EMAIL_TO=your-email@domain.com
 
-The system also implements custom analytics for AI-specific features:
-
-```typescript
-// Conversation analytics from chat.ts
-await logConversation(
-  userMessage, 
-  result.text, 
-  "answered", 
-  responseTime,
-  sessionId,
-  modelUsed,
-  vectorSources,
-  contextUsed
-)
+# Admin & Security
+ADMIN_PASSWORD=secure_admin_password
+VERCEL_ANALYTICS_ID=your_analytics_id
 ```
 
-**Custom Metrics Tracked:**
-- AI chat interactions and success rates
-- Vector search performance and relevance scores
-- User engagement with different portfolio sections
-- Admin dashboard usage and content management activities
-
-#### **Privacy & Compliance**
-
-- **GDPR Compliant**: Analytics collection respects user privacy preferences
-- **No Personal Data**: User identification is session-based, not personally identifiable
-- **Opt-out Capable**: Analytics can be disabled through user preferences
-- **Data Retention**: Follows Vercel's data retention policies
-
----
-
-## Security Considerations
-
-### Authentication & Authorization
-- **Admin Access**: Environment-based authentication for admin functions
-- **Session Management**: Secure session handling with HTTP-only cookies
-- **Rate Limiting**: API endpoint protection against abuse
-- **Input Validation**: Comprehensive input sanitization with Zod schemas
-
-### Data Protection
-- **Database Security**: SSL connections and credential encryption
-- **Vector Search**: Secured API tokens for Upstash Vector
-- **AI Model Access**: Protected API keys for AI service providers
-- **Environment Variables**: Secure configuration management
-
-### Privacy & Compliance
-- **User Data**: Minimal collection with optional session tracking
-- **Conversation Logs**: Anonymized storage with IP address hashing
-- **GDPR Compliance**: Data retention policies and deletion capabilities
-- **Analytics**: Privacy-focused metrics without personal identification
-
-### Security Headers & Policies
-```typescript
-// Next.js security configuration
-{
-  headers: [
-    {
-      source: '/(.*)',
-      headers: [
-        { key: 'X-Frame-Options', value: 'DENY' },
-        { key: 'X-Content-Type-Options', value: 'nosniff' },
-        { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
-        { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' }
-      ]
-    }
-  ]
-}
-```
+### Build & Deploy Process
+1. **Code Push**: GitHub integration triggers automatic builds
+2. **Build Process**: Next.js optimization and type checking
+3. **Static Generation**: Pre-rendering of static pages
+4. **Serverless Functions**: API routes and Server Actions deployment
+5. **Edge Distribution**: Global CDN deployment for optimal performance
 
 ---
 
@@ -1006,7 +874,7 @@ await logConversation(
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### Monitoring & Analytics
+### Monitoring & Performance Tracking
 - **Vercel Analytics**: Real-time performance and usage metrics for user behavior insights
 - **Vercel Speed Insights**: Core Web Vitals monitoring and performance optimization tracking
 - **Database Monitoring**: Query performance and connection health
@@ -1016,186 +884,9 @@ await logConversation(
 
 ---
 
-## Deployment Architecture
-
-### Vercel Platform Deployment
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        VERCEL EDGE NETWORK                             │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
-│  │   Static        │  │   API Routes    │  │   Server        │         │
-│  │   Assets        │  │   (Serverless)  │  │   Actions       │         │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
-│                                                                         │
-└─────────────────────┬───────────────────────────────────────────────────┘
-                      │
-┌─────────────────────┴───────────────────────────────────────────────────┐
-│                      EXTERNAL SERVICES                                 │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
-│  │   PostgreSQL    │  │   Upstash       │  │   AI Models     │         │
-│  │   (Hosted)      │  │   Vector/Redis  │  │   (Various)     │         │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Deployment Configuration
-
-#### **Environment Variables**
-```bash
-# Required
-AI_GATEWAY_API_KEY=vck-your_vercel_consumer_key
-DATABASE_URL=postgresql://username:password@host:port/database
-UPSTASH_VECTOR_REST_URL=https://your-vector-db.upstash.io
-UPSTASH_VECTOR_REST_TOKEN=your_upstash_token
-
-# Optional - AI Chat Configuration
-AI_MODEL=openai/gpt-4o
-CONVERSATION_LIMIT=6
-ENABLE_CONVERSATION_SUMMARY=true
-
-# Optional - Admin & Analytics
-ADMIN_PASSWORD=secure_admin_password
-VERCEL_ANALYTICS_ID=your_analytics_id
-```
-
-#### **Build & Deploy Process**
-1. **Code Push**: GitHub integration triggers automatic builds
-2. **Build Process**: Next.js optimization and type checking
-3. **Static Generation**: Pre-rendering of static pages
-4. **Serverless Functions**: API routes and Server Actions deployment
-5. **Edge Distribution**: Global CDN deployment for optimal performance
-
-#### **Production Monitoring**
-- **Uptime Monitoring**: Automated health checks and alerting
-- **Performance Metrics**: Core Web Vitals and user experience tracking via Vercel Speed Insights
-- **User Analytics**: Real-time usage patterns and behavior insights via Vercel Analytics
-- **Error Monitoring**: Real-time error tracking and notification
-- **Usage Analytics**: Traffic patterns, feature utilization, and AI chat interaction metrics
-
----
-
-## Call Flow Diagrams
-
-### Complete AI Chat Interaction Flow
-
-```
-User                AI Chat               Vector Search         Database              AI Model
- │                    │                        │                   │                    │
- │ 1. Enter Question  │                        │                   │                    │
- ├──────────────────▶ │                        │                   │                    │
- │                    │ 2. Check History Limit │                   │                    │
- │                    ├────────────┐           │                   │                    │
- │                    │            │           │                   │                    │
- │                    │◀───────────┘           │                   │                    │
- │                    │ 3. Summarize if needed │                   │                    │
- │                    ├──────────────────────────────────────────────────────────────▶ │
- │                    │                        │                   │ 3a. Generate Summary│
- │                    │ ◀──────────────────────────────────────────────────────────────┤
- │                    │ 4. Validate Input      │                   │                    │
- │                    ├────────────┐           │                   │                    │
- │                    │            │           │                   │                    │
- │                    │◀───────────┘           │                   │                    │
- │                    │ 5. Search Context      │                   │                    │
- │                    ├──────────────────────▶ │                   │                    │
- │                    │                        │ 6. Query Embeddings│                   │
- │                    │                        ├─────────────────▶ │                    │
- │                    │                        │                   │ 7. Return Content │
- │                    │                        │ ◀─────────────────┤                   │
- │                    │ 8. Return Context      │                   │                    │
- │                    │ ◀──────────────────────┤                   │                    │
- │                    │ 9. Build Enhanced      │                   │                    │
- │                    │    Prompt w/ Summary   │                   │                    │
- │                    ├────────────┐           │                   │                    │
- │                    │            │           │                   │                    │
- │                    │◀───────────┘           │                   │                    │
- │                    │ 10. Generate Response  │                   │                    │
- │                    ├──────────────────────────────────────────────────────────────▶ │
- │                    │                        │                   │ 11. Stream Response│
- │                    │ ◀──────────────────────────────────────────────────────────────┤
- │ 12. Display        │                        │                   │                    │
- │     Response       │                        │                   │                    │
- │ ◀──────────────────┤                        │                   │                    │
- │                    │ 13. Log Conversation   │                   │                    │
- │                    ├──────────────────────────────────────────▶ │                    │
- │                    │                        │                   │                    │
-```
-
-### Admin Content Management Flow
-
-```
-Admin User          Admin Interface        Database               Vector DB
-    │                      │                   │                     │
-    │ 1. Login             │                   │                     │
-    ├────────────────────▶ │                   │                     │
-    │                      │ 2. Verify Auth    │                     │
-    │                      ├─────────────┐     │                     │
-    │                      │             │     │                     │
-    │                      │◀────────────┘     │                     │
-    │ 3. Access Dashboard  │                   │                     │
-    │ ◀────────────────────┤                   │                     │
-    │ 4. Edit Content      │                   │                     │
-    ├────────────────────▶ │                   │                     │
-    │                      │ 5. Validate Data  │                     │
-    │                      ├─────────────┐     │                     │
-    │                      │             │     │                     │
-    │                      │◀────────────┘     │                     │
-    │                      │ 6. Update Database│                     │
-    │                      ├─────────────────▶ │                     │
-    │                      │                   │ 7. Confirm Update  │
-    │                      │ ◀─────────────────┤                     │
-    │                      │ 8. Sync Embeddings│                     │
-    │                      ├───────────────────────────────────────▶ │
-    │                      │                   │                     │
-    │ 9. Success Feedback  │                   │                     │
-    │ ◀────────────────────┤                   │                     │
-    │                      │                   │                     │
-```
-
-### MCP Server Tool Execution Flow
-
-```
-MCP Client          MCP Server            Database              Vector Search
-    │                   │                     │                      │
-    │ 1. Tool Request   │                     │                      │
-    ├─────────────────▶ │                     │                      │
-    │                   │ 2. Parse Tool Call  │                      │
-    │                   ├───────────┐         │                      │
-    │                   │           │         │                      │
-    │                   │◀──────────┘         │                      │
-    │                   │ 3. Validate Input   │                      │
-    │                   ├───────────┐         │                      │
-    │                   │           │         │                      │
-    │                   │◀──────────┘         │                      │
-    │                   │ 4. Execute Query    │                      │
-    │                   ├───────────────────▶ │                      │
-    │                   │                     │ 5. Return Data      │
-    │                   │ ◀───────────────────┤                      │
-    │                   │ 6. Optional Vector  │                      │
-    │                   │    Search           │                      │
-    │                   ├────────────────────────────────────────▶   │
-    │                   │                     │                      │
-    │                   │ 7. Enhanced Results │                      │
-    │                   │ ◀──────────────────────────────────────────┤
-    │                   │ 8. Format Response  │                      │
-    │                   ├───────────┐         │                      │
-    │                   │           │         │                      │
-    │                   │◀──────────┘         │                      │
-    │ 9. Tool Response  │                     │                      │
-    │ ◀─────────────────┤                     │                      │
-    │                   │                     │                      │
-```
-
----
-
 ## Conclusion
 
-This high-level design document provides a comprehensive overview of the Lewis Perez AI-Powered Portfolio system. The architecture demonstrates a modern, scalable approach to building an intelligent portfolio website that combines traditional web development with cutting-edge AI capabilities.
+This comprehensive system design document provides a complete overview of the Lewis Perez AI-Powered Portfolio system. The architecture demonstrates a modern, scalable approach to building an intelligent portfolio website that combines traditional web development with cutting-edge AI capabilities.
 
 ### Key Design Strengths
 
@@ -1204,6 +895,8 @@ This high-level design document provides a comprehensive overview of the Lewis P
 3. **Scalable Data Layer**: Robust database design supporting both relational and vector search operations
 4. **Developer Experience**: TypeScript throughout, comprehensive documentation, and modern tooling
 5. **Production Ready**: Security considerations, monitoring, and deployment optimization
+6. **Intelligent Conversation Management**: Advanced conversation continuity with smart summarization
+7. **Comprehensive Analytics**: Multi-layered analytics for both user behavior and system performance
 
 ### Future Enhancement Opportunities
 
@@ -1218,11 +911,11 @@ This high-level design document provides a comprehensive overview of the Lewis P
    - User-controlled conversation branching and topic management
    - Cross-session conversation persistence with user accounts
 
-The system successfully balances innovation with reliability, providing a solid foundation for continued development and enhancement. The recent addition of intelligent conversation continuity demonstrates the platform's commitment to providing seamless user experiences while maintaining optimal performance characteristics.
+The system successfully balances innovation with reliability, providing a solid foundation for continued development and enhancement. The conversation continuity system and comprehensive analytics integration demonstrate the platform's commitment to providing seamless user experiences while maintaining optimal performance characteristics.
 
 ---
 
-*Document Version: 1.2*  
-*Last Updated: September 5, 2025*  
+*Document Version: 2.0*  
+*Last Updated: September 6, 2025*  
 *Author: GitHub Copilot for Lewis Perez*  
-*Update: Added conversation continuity system documentation and enhanced AI chat architecture details*
+*Consolidated from: HIGH_LEVEL_DESIGN.md, AI_CHAT_CONFIGURATION.md, CONVERSATION_CONTINUITY.md, EMBEDDING_SETUP.md, CONTACT_FORM_SETUP.md, security documents*

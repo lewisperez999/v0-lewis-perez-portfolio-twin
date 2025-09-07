@@ -1,16 +1,16 @@
--- Lewis Perez Portfolio Database Schema - UPDATED TO MATCH WORKING DATABASE
--- PostgreSQL schema for professional portfolio, MCP tools, and conversation logging  
--- Updated September 2025 to reflect actual production database structure
+-- Lewis Perez Portfolio Database Schema - ACTUAL WORKING STRUCTURE
+-- PostgreSQL schema for professional portfolio, MCP tools, and conversation logging
+-- Updated to match the actual production database structure
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================
--- CORE PROFESSIONAL DATA TABLES (MCP COMPATIBLE)
+-- CORE PROFESSIONAL DATA TABLES
 -- ============================================
 
--- Professional information (single record with UUID primary key)
+-- Professional information (single record)
 CREATE TABLE IF NOT EXISTS personal_info (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS personal_info (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Skills and competencies (INTEGER primary key, skill_name column)
+-- Skills and competencies
 CREATE TABLE IF NOT EXISTS skills (
     id INTEGER NOT NULL DEFAULT nextval('skills_id_seq'::regclass) PRIMARY KEY,
     professional_id INTEGER,
@@ -44,7 +44,10 @@ CREATE TABLE IF NOT EXISTS skills (
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Projects portfolio (INTEGER primary key, name column, repository_url)
+-- Create sequence for skills table
+CREATE SEQUENCE IF NOT EXISTS skills_id_seq;
+
+-- Projects portfolio
 CREATE TABLE IF NOT EXISTS projects (
     id INTEGER NOT NULL DEFAULT nextval('projects_id_seq'::regclass) PRIMARY KEY,
     professional_id INTEGER,
@@ -60,7 +63,10 @@ CREATE TABLE IF NOT EXISTS projects (
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Professional experience (INTEGER primary key, company/position columns)
+-- Create sequence for projects table
+CREATE SEQUENCE IF NOT EXISTS projects_id_seq;
+
+-- Professional experience
 CREATE TABLE IF NOT EXISTS experiences (
     id INTEGER NOT NULL DEFAULT nextval('experiences_id_seq'::regclass) PRIMARY KEY,
     professional_id INTEGER,
@@ -78,7 +84,10 @@ CREATE TABLE IF NOT EXISTS experiences (
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Content chunks for vector search (INTEGER primary key, enhanced metadata)
+-- Create sequence for experiences table
+CREATE SEQUENCE IF NOT EXISTS experiences_id_seq;
+
+-- Content chunks for vector search and MCP tools
 CREATE TABLE IF NOT EXISTS content_chunks (
     id INTEGER NOT NULL DEFAULT nextval('content_chunks_id_seq'::regclass) PRIMARY KEY,
     professional_id INTEGER,
@@ -97,62 +106,151 @@ CREATE TABLE IF NOT EXISTS content_chunks (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- ============================================
--- CREATE SEQUENCES FOR INTEGER PRIMARY KEYS
--- ============================================
-
-CREATE SEQUENCE IF NOT EXISTS skills_id_seq;
-CREATE SEQUENCE IF NOT EXISTS projects_id_seq; 
-CREATE SEQUENCE IF NOT EXISTS experiences_id_seq;
+-- Create sequence for content_chunks table
 CREATE SEQUENCE IF NOT EXISTS content_chunks_id_seq;
+
+-- ============================================
+-- CONVERSATION LOGGING AND ANALYTICS
+-- ============================================
 
 -- Main conversations table
 CREATE TABLE IF NOT EXISTS conversations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_id VARCHAR(255), -- Optional: group conversations by session
+    session_id VARCHAR(255),
     user_message TEXT NOT NULL,
     ai_response TEXT NOT NULL,
     response_time_ms INTEGER,
     status VARCHAR(20) NOT NULL CHECK (status IN ('answered', 'pending', 'failed')),
     model_used VARCHAR(100),
-    vector_sources JSONB, -- Store relevant source chunks as JSON
-    context_used TEXT, -- RAG context that was provided to the AI
-    user_ip VARCHAR(45), -- Optional: for analytics (IPv4/IPv6)
-    user_agent TEXT, -- Optional: browser/client info
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Conversation metrics for analytics
-CREATE TABLE IF NOT EXISTS conversation_metrics (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    date DATE NOT NULL UNIQUE,
-    total_conversations INTEGER DEFAULT 0,
-    successful_conversations INTEGER DEFAULT 0,
-    failed_conversations INTEGER DEFAULT 0,
-    average_response_time_ms INTEGER DEFAULT 0,
-    unique_users INTEGER DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- User sessions (optional for tracking unique users)
-CREATE TABLE IF NOT EXISTS user_sessions (
-    session_id VARCHAR(255) PRIMARY KEY,
+    vector_sources JSONB,
+    context_used TEXT,
     user_ip VARCHAR(45),
     user_agent TEXT,
-    first_visit TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    last_activity TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    conversation_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- ============================================
--- INDEXES FOR PERFORMANCE (MCP OPTIMIZED)
+-- ADDITIONAL SUPPORTING TABLES (if needed)
 -- ============================================
 
--- Core table indexes optimized for MCP tool queries
+-- Education information
+CREATE TABLE IF NOT EXISTS education (
+    id INTEGER NOT NULL DEFAULT nextval('education_id_seq'::regclass) PRIMARY KEY,
+    professional_id INTEGER,
+    institution VARCHAR(255),
+    degree VARCHAR(255),
+    field_of_study VARCHAR(255),
+    start_date DATE,
+    end_date DATE,
+    description TEXT,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create sequence for education table
+CREATE SEQUENCE IF NOT EXISTS education_id_seq;
+
+-- Professionals table (for multi-user support)
+CREATE TABLE IF NOT EXISTS professionals (
+    id INTEGER NOT NULL DEFAULT nextval('professionals_id_seq'::regclass) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create sequence for professionals table
+CREATE SEQUENCE IF NOT EXISTS professionals_id_seq;
+
+-- Content sources tracking
+CREATE TABLE IF NOT EXISTS content_sources (
+    id INTEGER NOT NULL DEFAULT nextval('content_sources_id_seq'::regclass) PRIMARY KEY,
+    source_name VARCHAR(255) NOT NULL,
+    source_type VARCHAR(100),
+    last_updated TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50) DEFAULT 'active'
+);
+
+-- Create sequence for content_sources table
+CREATE SEQUENCE IF NOT EXISTS content_sources_id_seq;
+
+-- Embeddings storage (for vector search)
+CREATE TABLE IF NOT EXISTS embeddings (
+    id INTEGER NOT NULL DEFAULT nextval('embeddings_id_seq'::regclass) PRIMARY KEY,
+    content_id INTEGER,
+    embedding_vector VECTOR,
+    model_used VARCHAR(100),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create sequence for embeddings table
+CREATE SEQUENCE IF NOT EXISTS embeddings_id_seq;
+
+-- JSON content storage
+CREATE TABLE IF NOT EXISTS json_content (
+    id INTEGER NOT NULL DEFAULT nextval('json_content_id_seq'::regclass) PRIMARY KEY,
+    content_type VARCHAR(100),
+    data JSONB NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create sequence for json_content table
+CREATE SEQUENCE IF NOT EXISTS json_content_id_seq;
+
+-- Professional skills mapping (many-to-many)
+CREATE TABLE IF NOT EXISTS professional_skills (
+    id INTEGER NOT NULL DEFAULT nextval('professional_skills_id_seq'::regclass) PRIMARY KEY,
+    professional_id INTEGER,
+    skill_id INTEGER,
+    proficiency_level INTEGER,
+    years_experience DECIMAL(3,1),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create sequence for professional_skills table
+CREATE SEQUENCE IF NOT EXISTS professional_skills_id_seq;
+
+-- Project skills mapping
+CREATE TABLE IF NOT EXISTS project_skills (
+    id INTEGER NOT NULL DEFAULT nextval('project_skills_id_seq'::regclass) PRIMARY KEY,
+    project_id INTEGER,
+    skill_name VARCHAR(255),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create sequence for project_skills table
+CREATE SEQUENCE IF NOT EXISTS project_skills_id_seq;
+
+-- Search keywords
+CREATE TABLE IF NOT EXISTS search_keywords (
+    id INTEGER NOT NULL DEFAULT nextval('search_keywords_id_seq'::regclass) PRIMARY KEY,
+    keyword VARCHAR(255) NOT NULL,
+    category VARCHAR(100),
+    weight INTEGER DEFAULT 1,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create sequence for search_keywords table
+CREATE SEQUENCE IF NOT EXISTS search_keywords_id_seq;
+
+-- Site operations and monitoring
+CREATE TABLE IF NOT EXISTS site_operations (
+    id INTEGER NOT NULL DEFAULT nextval('site_operations_id_seq'::regclass) PRIMARY KEY,
+    operation_type VARCHAR(100),
+    status VARCHAR(50),
+    details JSONB,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create sequence for site_operations table
+CREATE SEQUENCE IF NOT EXISTS site_operations_id_seq;
+
+-- ============================================
+-- INDEXES FOR PERFORMANCE
+-- ============================================
+
+-- Core table indexes
 CREATE INDEX IF NOT EXISTS idx_skills_professional_id ON skills(professional_id);
 CREATE INDEX IF NOT EXISTS idx_skills_category ON skills(category);
 CREATE INDEX IF NOT EXISTS idx_skills_skill_name ON skills(skill_name);
@@ -169,21 +267,10 @@ CREATE INDEX IF NOT EXISTS idx_content_chunks_chunk_type ON content_chunks(chunk
 CREATE INDEX IF NOT EXISTS idx_content_chunks_chunk_id ON content_chunks(chunk_id);
 CREATE INDEX IF NOT EXISTS idx_content_chunks_vector_id ON content_chunks(vector_id);
 
--- Conversations table indexes
+-- Conversation indexes
 CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON conversations(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_conversations_status ON conversations(status);
 CREATE INDEX IF NOT EXISTS idx_conversations_session_id ON conversations(session_id);
-CREATE INDEX IF NOT EXISTS idx_conversations_response_time ON conversations(response_time_ms);
-
--- Content chunks indexes
-CREATE INDEX IF NOT EXISTS idx_content_chunks_type ON content_chunks(chunk_type);
-CREATE INDEX IF NOT EXISTS idx_content_chunks_created ON content_chunks(created_at);
-
--- Metrics table indexes
-CREATE INDEX IF NOT EXISTS idx_conversation_metrics_date ON conversation_metrics(date DESC);
-
--- User sessions indexes
-CREATE INDEX IF NOT EXISTS idx_user_sessions_last_activity ON user_sessions(last_activity DESC);
 
 -- ============================================
 -- FUNCTIONS AND TRIGGERS
@@ -198,7 +285,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Triggers for updated_at columns (only where applicable)
+-- Triggers for updated_at columns (only for tables that have updated_at)
 CREATE TRIGGER IF NOT EXISTS update_personal_info_updated_at 
     BEFORE UPDATE ON personal_info 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -211,49 +298,48 @@ CREATE TRIGGER IF NOT EXISTS update_conversations_updated_at
     BEFORE UPDATE ON conversations 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- ============================================
--- SAMPLE DATA FOR TESTING (UPDATED STRUCTURE)
--- ============================================
-
--- Insert sample content chunks using new structure
-INSERT INTO content_chunks (professional_id, chunk_id, title, content, chunk_type, source_file, word_count, search_weight) 
-VALUES 
-    (1, 'exp_ing_001', 'ING Australia Experience', 'Senior Software Engineer at ING Australia with 3+ years developing enterprise banking solutions using Java, Spring Boot, and microservices architecture. Led performance optimization initiatives reducing API response times from 500ms to 200ms.', 'experience', 'experience.md', 45, 8),
-    (1, 'skills_java_001', 'Java/Spring Boot Expertise', 'Expert-level Java development with Spring Boot framework. 8+ years of experience building scalable enterprise applications, RESTful APIs, and microservices. Proficient in Spring Security, Spring Data, and Spring Cloud ecosystem.', 'skills', 'skills.md', 38, 9),
-    (1, 'projects_ecom_001', 'E-commerce Platform Project', 'Built comprehensive e-commerce platform using Next.js, Shopify integration, and real-time inventory management. Implemented payment processing, order tracking, and admin dashboard with 99.9% uptime.', 'projects', 'projects.md', 32, 7)
-ON CONFLICT (chunk_id) DO NOTHING;
-
--- Insert sample skills using new structure (skill_name, proficiency)
-INSERT INTO skills (professional_id, category, skill_name, proficiency, experience_years, context, skill_type)
-VALUES 
-    (1, 'Programming Languages', 'Java', 'Expert', '8+ years', 'Enterprise applications, microservices, Spring ecosystem', 'technical'),
-    (1, 'Programming Languages', 'JavaScript/TypeScript', 'Advanced', '6+ years', 'Full-stack development, React, Node.js', 'technical'),
-    (1, 'Frameworks', 'Spring Boot', 'Expert', '6+ years', 'Microservices architecture, RESTful APIs', 'technical'),
-    (1, 'Frameworks', 'React/Next.js', 'Advanced', '4+ years', 'Modern frontend development, SSR/SSG', 'technical'),
-    (1, 'Databases', 'PostgreSQL', 'Expert', '7+ years', 'Database design, optimization, complex queries', 'technical'),
-    (1, 'Cloud Platforms', 'AWS', 'Intermediate', '5+ years', 'EC2, RDS, Lambda, S3, CloudFormation', 'technical')
-ON CONFLICT DO NOTHING;
-
--- Insert sample projects using new structure (name, repository_url, demo_url)
-INSERT INTO projects (professional_id, name, description, technologies, role, repository_url, demo_url)
-VALUES 
-    (1, 'Banking Microservices Platform', 'Enterprise banking solution with microservices architecture, handling millions of transactions daily with 99.9% uptime', ARRAY['Java', 'Spring Boot', 'PostgreSQL', 'Redis', 'AWS'], 'Senior Java Engineer', null, null),
-    (1, 'AI Portfolio Chat', 'Interactive portfolio with AI-powered chat using RAG and vector search for professional context', ARRAY['Next.js', 'TypeScript', 'AI SDK', 'PostgreSQL', 'Vector DB'], 'Full Stack Developer', 'https://github.com/lewisperez999/portfolio-v0', 'https://lewisperez.dev'),
-    (1, 'E-commerce Platform', 'Full-stack e-commerce solution with Shopify integration and real-time inventory management', ARRAY['Next.js', 'Shopify', 'PostgreSQL', 'Stripe'], 'Full Stack Developer', null, 'https://gintuanatbp.com')
-ON CONFLICT DO NOTHING;
-
--- Insert sample experiences using new structure (company, position)
-INSERT INTO experiences (professional_id, company, position, duration, description, achievements, technologies, skills_developed)
-VALUES
-    (1, 'Freelance', 'Full Stack Developer', 'Mar 2025 – Present', 'Deliver end-to-end e-commerce builds and optimizations using Shopify, Liquid, React/Next.js, and secure payment integrations.', ARRAY['Launched Shopify store with +20% conversion improvement', 'Integrated secure payment processing with 99.9% uptime'], ARRAY['Shopify', 'React', 'Next.js', 'Stripe', 'PayPal'], ARRAY['Client discovery', 'Payment integration', 'Performance optimization']),
-    (1, 'ING Business Shared Services', 'Java Engineer', 'Nov 2021 – Oct 2022', 'Designed and optimized Spring Boot microservices for customer onboarding with secure API layers and AES-256 encryption.', ARRAY['Reduced API response time from 500ms to 200ms', 'Mentored 3 junior engineers'], ARRAY['Java', 'Spring Boot', 'PostgreSQL', 'AWS', 'Docker'], ARRAY['Microservices design', 'Performance tuning', 'Mentoring'])
-ON CONFLICT DO NOTHING;
+CREATE TRIGGER IF NOT EXISTS update_json_content_updated_at 
+    BEFORE UPDATE ON json_content 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
--- VIEWS FOR EASY DATA ACCESS
+-- VIEWS FOR MCP TOOLS AND ANALYTICS
 -- ============================================
 
--- View for recent conversation analytics
+-- Comprehensive professional profile view
+CREATE OR REPLACE VIEW professional_profile AS
+SELECT 
+    p.id,
+    p.name,
+    p.title,
+    p.location,
+    p.email,
+    p.phone,
+    p.summary,
+    p.bio,
+    p.tagline,
+    p.highlights,
+    p.website,
+    p.linkedin,
+    p.github,
+    p.twitter,
+    (SELECT COUNT(*) FROM skills s WHERE s.professional_id = 1) as total_skills,
+    (SELECT COUNT(*) FROM projects pr WHERE pr.professional_id = 1) as total_projects,
+    (SELECT COUNT(*) FROM experiences e WHERE e.professional_id = 1) as total_experiences
+FROM personal_info p;
+
+-- Skills summary view
+CREATE OR REPLACE VIEW skills_summary AS
+SELECT 
+    category,
+    COUNT(*) as skill_count,
+    ARRAY_AGG(skill_name ORDER BY skill_name) as skills
+FROM skills 
+WHERE professional_id = 1
+GROUP BY category
+ORDER BY category;
+
+-- Recent conversation analytics
 CREATE OR REPLACE VIEW recent_conversation_stats AS
 SELECT 
     DATE(created_at) as conversation_date,
@@ -267,48 +353,29 @@ WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY DATE(created_at)
 ORDER BY conversation_date DESC;
 
--- View for conversation success rate
-CREATE OR REPLACE VIEW conversation_success_rate AS
-SELECT 
-    COUNT(*) as total_conversations,
-    COUNT(*) FILTER (WHERE status = 'answered') as successful_conversations,
-    ROUND(
-        COUNT(*) FILTER (WHERE status = 'answered') * 100.0 / NULLIF(COUNT(*), 0), 2
-    ) as success_rate_percentage,
-    AVG(response_time_ms)::INTEGER as avg_response_time_ms
-FROM conversations 
-WHERE created_at >= CURRENT_DATE - INTERVAL '7 days';
-
 -- ============================================
--- HELPFUL COMMENTS AND DOCUMENTATION
+-- HELPFUL COMMENTS AND NOTES
 -- ============================================
 
--- This schema has been UPDATED to match the actual working database structure
--- Key changes made to align with production database:
--- 
--- 1. PRIMARY KEYS: Changed to INTEGER with sequences (except personal_info)
--- 2. COLUMN NAMES: Updated to match actual database
---    - skills.name → skills.skill_name
---    - skills.proficiency_level → skills.proficiency (VARCHAR)
---    - projects.github_url → projects.repository_url
---    - experiences.position and experiences.company (kept as-is)
--- 3. ADDITIONAL FIELDS: Added business logic columns
---    - projects: role, outcomes, challenges, documentation_url
---    - experiences: duration, skills_developed, impact, keywords
---    - skills: professional_id, experience_years, context, projects, skill_type
---    - content_chunks: professional_id, importance, search_weight, vector_id
--- 4. INDEXES: Optimized for MCP tool query patterns
--- 5. TRIGGERS: Only for tables with updated_at columns
---
--- MCP Tool Compatibility:
--- ✅ lookup_skills: skill_name, proficiency columns
--- ✅ query_projects: name, repository_url, demo_url columns  
--- ✅ get_experience_history: company, position columns
--- ✅ get_contact_info: name, title, website columns (personal_info)
--- ✅ search_professional_content: content_chunks with vector support
---
+-- This schema represents the ACTUAL WORKING database structure as of September 2025
+-- Key differences from the original schema.sql:
+-- 1. Uses INTEGER primary keys instead of UUIDs (except personal_info and conversations)
+-- 2. Includes professional_id foreign key relationships
+-- 3. Has additional business logic fields (outcomes, challenges, impact, etc.)
+-- 4. Uses different column names (skill_name vs name, position vs job_title, etc.)
+-- 5. Includes comprehensive metadata and search functionality
+-- 6. Supports multiple professionals (multi-tenant ready)
+
+-- MCP Tool Dependencies:
+-- - lookup_skills: Uses skills table with skill_name, proficiency columns
+-- - query_projects: Uses projects table with name, repository_url, demo_url columns  
+-- - get_experience_history: Uses experiences table with company, position columns
+-- - get_contact_info: Uses personal_info table with name, title, website columns
+-- - search_professional_content: Uses content_chunks table with vector search
+
 -- Usage Notes:
--- - Run this against a fresh database for full schema creation
--- - Existing databases should already have this structure
--- - All MCP tools are now aligned with this schema
--- - Sample data uses the correct column names and structure
+-- - This schema is optimized for the existing MCP tools and data structure
+-- - All sequences are created to support the INTEGER primary keys
+-- - Indexes are optimized for MCP query patterns
+-- - Triggers handle timestamp updates automatically
+-- - Views provide convenient access for analytics and profiles

@@ -12,6 +12,7 @@ import { getExperiences } from "../actions/experience"
 import { getProjects } from "../actions/projects"
 import { getSkills } from "../actions/skills"
 import { getContentChunks } from "../actions/content-chunks"
+import { bulkUpdatePortfolioData, validatePortfolioData, type BulkUpdateResult } from "../actions/bulk-operations"
 
 interface PortfolioData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,6 +35,7 @@ export function JsonEditor() {
   const [isSaving, setSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [saveResult, setSaveResult] = useState<BulkUpdateResult | null>(null)
 
   useEffect(() => {
     loadPortfolioData()
@@ -75,24 +77,17 @@ export function JsonEditor() {
     }
   }
 
-  const validateJson = (content: string) => {
+  const validateJson = async (content: string) => {
     try {
       const parsed = JSON.parse(content)
       
-      // Basic structure validation
-      const requiredFields = ['personal_info', 'experiences', 'projects', 'skills', 'content_chunks']
-      const missingFields = requiredFields.filter(field => !(field in parsed))
+      // Use the comprehensive validation function
+      const validation = await validatePortfolioData(parsed)
       
-      if (missingFields.length > 0) {
-        throw new Error(`Missing required fields: ${missingFields.join(', ')}`)
-      }
-
-      // Validate array fields
-      const arrayFields = ['experiences', 'projects', 'skills', 'content_chunks']
-      for (const field of arrayFields) {
-        if (!Array.isArray(parsed[field])) {
-          throw new Error(`Field '${field}' must be an array`)
-        }
+      if (!validation.valid) {
+        setIsValid(false)
+        setValidationError(validation.errors.join(', '))
+        return false
       }
 
       setIsValid(true)
@@ -107,32 +102,62 @@ export function JsonEditor() {
 
   const handleJsonChange = (content: string) => {
     setJsonContent(content)
-    validateJson(content)
+    setSaveResult(null) // Clear save results when JSON is modified
+    validateJson(content) // This is now async but we don't need to await it for real-time validation
   }
 
   const handleSave = async () => {
     if (!isValid) return
 
     setSaving(true)
+    setSaveResult(null)
+    
     try {
       // Parse the JSON content
       const portfolioData = JSON.parse(jsonContent)
       
-      // Here you would implement the logic to save back to database
-      // For now, just simulate the save
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // Validate the data structure
+      const validation = await validatePortfolioData(portfolioData)
+      if (!validation.valid) {
+        throw new Error(`Validation failed: ${validation.errors.join(', ')}`)
+      }
       
-      // In a real implementation, you'd call server actions to update each data type
-      // await updatePersonalInfo(portfolioData.personal_info)
-      // await updateExperiences(portfolioData.experiences)
-      // etc.
+      // Perform bulk update
+      console.log("Starting bulk update of portfolio data...")
+      const result = await bulkUpdatePortfolioData({
+        personal_info: portfolioData.personal_info,
+        experiences: portfolioData.experiences || [],
+        projects: portfolioData.projects || [],
+        skills: portfolioData.skills || [],
+        content_chunks: portfolioData.content_chunks || []
+      })
       
-      setLastUpdated(new Date())
-      alert("Portfolio data saved successfully! (Note: Full save functionality would be implemented in a production system)")
+      setSaveResult(result)
+      
+      if (result.success) {
+        setLastUpdated(new Date())
+        console.log("Portfolio data saved successfully:", result)
+        
+        // Reload data to reflect changes
+        await loadPortfolioData()
+      } else {
+        console.error("Save failed with errors:", result.errors)
+      }
       
     } catch (error) {
       console.error("Error saving portfolio data:", error)
-      alert("Error saving portfolio data. Please check the JSON format and try again.")
+      setSaveResult({
+        success: false,
+        message: error instanceof Error ? error.message : "Unknown error occurred",
+        updated: {
+          personalInfo: false,
+          experiences: 0,
+          projects: 0,
+          skills: 0,
+          contentChunks: 0
+        },
+        errors: [error instanceof Error ? error.message : "Unknown error occurred"]
+      })
     } finally {
       setSaving(false)
     }
@@ -258,6 +283,74 @@ export function JsonEditor() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Save Result */}
+      {saveResult && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-3">
+              {saveResult.success ? (
+                <>
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="text-green-700 font-medium">Save Completed Successfully</span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    All data updated
+                  </Badge>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                  <span className="text-red-700 font-medium">Save Failed</span>
+                  <Badge variant="destructive">Errors occurred</Badge>
+                </>
+              )}
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-3">{saveResult.message}</p>
+            
+            {/* Save details */}
+            <div className="grid gap-2 text-sm">
+              <div className="flex justify-between">
+                <span>Personal Info:</span>
+                <span className={saveResult.updated.personalInfo ? "text-green-600" : "text-muted-foreground"}>
+                  {saveResult.updated.personalInfo ? "✓ Updated" : "No changes"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Experiences:</span>
+                <span className="text-blue-600">{saveResult.updated.experiences} updated</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Projects:</span>
+                <span className="text-blue-600">{saveResult.updated.projects} updated</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Skills:</span>
+                <span className="text-blue-600">{saveResult.updated.skills} updated</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Content Chunks:</span>
+                <span className="text-blue-600">{saveResult.updated.contentChunks} updated</span>
+              </div>
+            </div>
+            
+            {/* Show errors if any */}
+            {saveResult.errors && saveResult.errors.length > 0 && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-1">
+                    <p className="font-medium">Errors encountered:</p>
+                    {saveResult.errors.map((error, index) => (
+                      <p key={index} className="text-xs">{error}</p>
+                    ))}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Validation Status */}
       <Card>

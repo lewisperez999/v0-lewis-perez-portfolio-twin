@@ -84,7 +84,7 @@ export async function generateAIResponse(
     } catch (error) {
       console.log("Vector search failed, continuing without context:", error)
       context =
-        "Professional software engineer with expertise in Java/Spring Boot, database optimization, and enterprise systems."
+        "Senior Software Engineer with 8+ years experience. Currently Full Stack Developer freelancing with React/Next.js/Shopify. Strong enterprise background in Java/Spring Boot, AWS, and database optimization at companies like ING and Amdocs. Modern tech stack includes TypeScript, Node.js, PostgreSQL, and e-commerce development."
     }
 
     if (!process.env.AI_GATEWAY_API_KEY) {
@@ -255,14 +255,22 @@ IMPORTANT GUIDELINES:
 - Use the provided context to give accurate, specific answers
 - Include specific examples, metrics, and achievements when relevant
 - Maintain a professional yet personable tone
-- If asked about something not in your background, politely clarify your actual experience
 - Reference specific companies, technologies, and projects mentioned in the context
 - Keep responses focused and relevant to the question asked
+
+YOUR ACTUAL EXPERIENCE INCLUDES:
+- Full Stack Development: Currently freelancing as Full Stack Developer (Mar 2025 - Present)
+- Modern Frontend: React, Next.js, TypeScript experience through multiple projects
+- Backend: Java/Spring Boot (5+ years), Node.js (2+ years)
+- Cloud & DevOps: AWS (Lambda, API Gateway, S3), Docker, Jenkins
+- Databases: PostgreSQL, MySQL, Oracle
+- E-commerce: Shopify development, payment integrations (Stripe/PayPal)
+- Enterprise Experience: ING, Amdocs, IBM - banking and telecom systems
 
 CONTEXT FROM YOUR PROFESSIONAL BACKGROUND:
 ${context}
 
-If the context doesn't contain relevant information for the question, politely explain what you can help with based on your actual experience in software engineering, particularly in Java/Spring Boot, database optimization, and enterprise system development.`
+Based on your diverse experience spanning enterprise backend development, modern full-stack projects, and current freelance work, you can speak knowledgeably about both traditional enterprise technologies and modern web development stacks.`
 
   // Add persona enhancement if provided (for AI-to-AI conversations)
   if (personaEnhancement) {
@@ -392,19 +400,17 @@ export async function searchProfessionalContent(query: string) {
  * Get suggested questions based on available content
  */
 export async function getSuggestedQuestions() {
-  try {
-    if (!process.env.AI_GATEWAY_API_KEY) {
-      return [
-        "What's your experience with Java and Spring Boot development?",
-        "Can you tell me about your database optimization achievements?",
-        "What was your most challenging project at ING?",
-        "How do you approach system performance improvements?",
-        "What's your experience with cloud technologies and AWS?",
-        "Can you describe your leadership and mentoring experience?",
-      ]
-    }
-
-    // Try to get context and generate dynamic questions
+    try {
+      if (!process.env.AI_GATEWAY_API_KEY) {
+        return [
+          "What's your experience with React and Next.js development?",
+          "Can you tell me about your current full-stack freelance work?",
+          "How do you combine enterprise Java experience with modern web development?",
+          "What was your most challenging project at ING or in your freelance work?",
+          "How do you approach building e-commerce solutions with Shopify?",
+          "Can you describe your experience with TypeScript and modern JavaScript?",
+        ]
+      }    // Try to get context and generate dynamic questions
     let context = ""
     try {
       const contextResult = await getAIChatContext("professional experience skills achievements")
@@ -413,7 +419,7 @@ export async function getSuggestedQuestions() {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       console.log("Using fallback context for questions", error)
       context =
-        "Senior Software Engineer with Java/Spring Boot expertise, database optimization experience, and enterprise system development background."
+        "Senior Software Engineer with 8+ years experience. Currently Full Stack Developer freelancing with React/Next.js/TypeScript/Shopify. Strong enterprise background in Java/Spring Boot, AWS, microservices at ING, Amdocs, IBM. Expert in both modern web development and enterprise systems."
     }
 
     const { generateObject } = await import("ai")
@@ -444,12 +450,12 @@ Format as a JSON array of question strings.`,
 
     // Fallback questions if AI generation fails
     return [
-      "What's your experience with Java and Spring Boot development?",
-      "Can you tell me about your database optimization achievements?",
-      "What was your most challenging project at ING or Amdocs?",
-      "How do you approach system performance improvements?",
-      "What's your experience with cloud technologies and AWS?",
-      "Can you describe your leadership and mentoring experience?",
+      "What's your experience with React and Next.js development?",
+      "Can you tell me about your current full-stack freelance work?",
+      "How do you combine enterprise Java experience with modern web development?",
+      "What was your most challenging project at ING or in your freelance work?",
+      "How do you approach building e-commerce solutions with Shopify?",
+      "Can you describe your experience with TypeScript and modern JavaScript?",
     ]
   }
 }

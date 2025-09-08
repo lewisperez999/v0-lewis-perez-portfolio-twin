@@ -114,42 +114,49 @@ export async function searchVectors(query: string, options: VectorSearchOptions 
 function getMockSearchResults(query: string, options: VectorSearchOptions = {}): SearchResult[] {
   const { topK = 5 } = options
 
-  // Mock professional content based on common queries
+  // Mock professional content based on actual experience
   const mockContent = [
     {
-      id: "exp-1",
+      id: "current-role",
       score: 0.95,
-      metadata: { chunk_type: "experience", importance: "critical", title: "Senior Software Engineer at ING" },
+      metadata: { chunk_type: "experience", importance: "critical", title: "Full Stack Developer (Current)" },
       content:
-        "Senior Software Engineer at ING Australia (2022-2024). Led microservices architecture optimization, reducing API response times from 500ms to 200ms. Implemented automated testing frameworks achieving 95% code coverage.",
+        "Currently freelancing as Full Stack Developer (Mar 2025 - Present). Building e-commerce solutions with React, Next.js, Shopify, and TypeScript. Expert in payment integrations (Stripe/PayPal) and modern web development.",
     },
     {
-      id: "skills-1",
+      id: "modern-skills",
       score: 0.9,
-      metadata: { chunk_type: "skills", importance: "critical", title: "Backend Technologies" },
+      metadata: { chunk_type: "skills", importance: "critical", title: "Modern Tech Stack" },
       content:
-        "Expert in Java, Spring Boot, AWS, PostgreSQL, Redis. 8+ years of enterprise software development experience with focus on scalable backend systems and microservices architecture.",
+        "Full Stack Developer with React, Next.js, TypeScript, Node.js (2+ years). Expert in Java/Spring Boot (5+ years), AWS, PostgreSQL. E-commerce specialist with Shopify, payment integrations, and modern web development.",
     },
     {
-      id: "proj-1",
+      id: "digital-twin-project",
+      score: 0.92,
+      metadata: { chunk_type: "projects", importance: "high", title: "Digital Twin Portfolio" },
+      content:
+        "Built Digital Twin Portfolio using Next.js, React, TypeScript, PostgreSQL, and AI integration. Features real-time data interaction, customizable personas, and automated workflows. Deployed on Vercel with modern architecture.",
+    },
+    {
+      id: "ing-experience",
+      score: 0.88,
+      metadata: { chunk_type: "experience", importance: "critical", title: "ING Java Engineer" },
+      content:
+        "Java Engineer at ING Business Shared Services (2021-2022). Built secure microservices with Spring Boot, AWS (Lambda, API Gateway), and AES-256 encryption. Reduced API response times from 500ms to 200ms.",
+    },
+    {
+      id: "shopify-project",
       score: 0.85,
-      metadata: { chunk_type: "projects", importance: "high", title: "E-commerce Platform" },
+      metadata: { chunk_type: "projects", importance: "high", title: "Shopify E-commerce" },
       content:
-        "Built full-stack e-commerce platform using Next.js and Shopify integration. Implemented real-time inventory management and payment processing with 99.9% uptime.",
+        "Custom Shopify store development with Liquid templates, React components, and secure payment integrations. Implemented analytics-driven optimizations and reduced support tickets by 30%.",
     },
     {
-      id: "edu-1",
-      score: 0.8,
-      metadata: { chunk_type: "education", importance: "medium", title: "Computer Science Education" },
+      id: "enterprise-background",
+      score: 0.82,
+      metadata: { chunk_type: "experience", importance: "high", title: "Enterprise Experience" },
       content:
-        "Bachelor of Science in Computer Science. Currently pursuing advanced studies in Melbourne, Australia. Continuous learning in cloud technologies and AI/ML applications.",
-    },
-    {
-      id: "summary-1",
-      score: 0.75,
-      metadata: { chunk_type: "summary", importance: "critical", title: "Professional Summary" },
-      content:
-        "Experienced Software Engineer with 8+ years in enterprise development. Specialized in Java, Spring Boot, AWS, and microservices. Proven track record of optimizing system performance and leading technical initiatives.",
+        "8+ years enterprise software development at IBM, Amdocs, and ING. Specialized in Java, Spring Boot, microservices, database optimization, and cloud technologies. Led teams and mentored developers.",
     },
   ]
 
@@ -272,7 +279,7 @@ export async function getAIChatContext(query: string): Promise<{
     console.error("Error getting AI chat context:", error)
     return {
       context:
-        "I am Lewis Perez, a Senior Software Engineer with 8+ years of experience in enterprise development, specializing in Java, Spring Boot, AWS, and microservices architecture.",
+        "I am Lewis Perez, a Senior Software Engineer with 8+ years of experience. Currently freelancing as Full Stack Developer using React, Next.js, TypeScript, and Shopify. Strong enterprise background in Java/Spring Boot, AWS, and microservices at companies like ING, Amdocs, and IBM. Expert in both modern web development and enterprise systems.",
       sources: [],
       relevanceScore: 0.5,
     }

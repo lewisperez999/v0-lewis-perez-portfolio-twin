@@ -27,7 +27,7 @@ export async function checkSystemHealth(): Promise<SystemHealthStatus> {
 
   // Test AI Model
   try {
-    console.log("Testing AI model health...")
+    // Testing AI model health...
     
     // Test with a simple prompt
     const testResult = await generateAIResponse("Hello, this is a health check. Please respond with 'OK'")
@@ -41,7 +41,7 @@ export async function checkSystemHealth(): Promise<SystemHealthStatus> {
         message: "Operational",
         model: configuredModel
       }
-      console.log("AI model health check passed:", configuredModel)
+      // AI model health check passed
     } else {
       health.aiModel = {
         status: "warning",
@@ -72,7 +72,7 @@ export async function checkSystemHealth(): Promise<SystemHealthStatus> {
     }
   }
 
-  // TODO: Add actual database and vector search health checks
+  // Future enhancement: Add database connectivity and vector search health checks
   // For now, we'll assume they're healthy since the app is running
 
   return health

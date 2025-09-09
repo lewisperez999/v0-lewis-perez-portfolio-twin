@@ -67,7 +67,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
     return mockEmbedding
     
     /* 
-    // TODO: Enable real embedding generation once API is configured
+    // Note: Real embedding generation requires AI Gateway API configuration
     const response = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
       headers: {

@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { LayoutDashboard, Database, FileText, Brain, LogOut, Menu, X } from "lucide-react"
-import { adminLogout } from "../actions/auth"
+import { LayoutDashboard, Database, FileText, Brain, LogOut, Menu, X, User } from "lucide-react"
+import { UserButton, useUser, SignOutButton } from "@clerk/nextjs"
 
 const navigation = [
   {
@@ -35,10 +35,7 @@ const navigation = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-
-  const handleLogout = async () => {
-    await adminLogout()
-  }
+  const { user } = useUser()
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
@@ -73,15 +70,36 @@ export function AdminSidebar() {
         </nav>
       </ScrollArea>
 
-      <div className="border-t p-4">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </Button>
+      <div className="border-t p-4 space-y-4">
+        {/* User Profile Section */}
+        <div className="flex items-center gap-3 px-3 py-2">
+          <UserButton 
+            appearance={{
+              elements: {
+                avatarBox: "h-8 w-8",
+              },
+            }}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground truncate">
+              {user?.fullName || user?.emailAddresses[0]?.emailAddress || "Admin User"}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {user?.emailAddresses[0]?.emailAddress}
+            </p>
+          </div>
+        </div>
+
+        {/* Sign Out Button */}
+        <SignOutButton redirectUrl="/admin/sign-in">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
+        </SignOutButton>
       </div>
     </div>
   )

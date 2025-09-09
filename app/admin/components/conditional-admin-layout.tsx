@@ -9,9 +9,9 @@ export function ConditionalAdminLayout({
   children: React.ReactNode 
 }) {
   const pathname = usePathname()
-  const isLoginPage = pathname === "/admin/login"
+  const isAuthPage = pathname === "/admin/login" || pathname === "/admin/sign-in"
 
-  if (isLoginPage) {
+  if (isAuthPage) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         {children}

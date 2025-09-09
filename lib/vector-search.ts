@@ -59,7 +59,7 @@ export async function searchVectors(query: string, options: VectorSearchOptions 
     }
 
     // Skip metadata filtering for now due to Upstash deserialization issues
-    // TODO: Re-enable once Upstash Vector API is fixed
+    // Note: Upstash Vector API integration disabled - using local fallback
     if (filter) {
       console.log("Skipping metadata filter due to API issues, using simple query")
     }

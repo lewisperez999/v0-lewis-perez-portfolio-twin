@@ -7,6 +7,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "sonner"
 import { Suspense } from "react"
+import { ClerkProvider } from '@clerk/nextjs'
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -21,17 +22,19 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <Suspense fallback={null}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            {children}
-          </ThemeProvider>
-        </Suspense>
-        <Toaster richColors position="top-right" />
-        <Analytics />
-        <SpeedInsights />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
+          <Suspense fallback={null}>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+              {children}
+            </ThemeProvider>
+          </Suspense>
+          <Toaster richColors position="top-right" />
+          <Analytics />
+          <SpeedInsights />
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

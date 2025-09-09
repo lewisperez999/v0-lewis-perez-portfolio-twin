@@ -82,13 +82,13 @@ export async function generateAIResponse(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       relevanceScore = contextResult.relevanceScore
     } catch (error) {
-      console.log("Vector search failed, continuing without context:", error)
+      // Vector search failed, continuing without context
       context =
         "Senior Software Engineer with 8+ years experience. Currently Full Stack Developer freelancing with React/Next.js/Shopify. Strong enterprise background in Java/Spring Boot, AWS, and database optimization at companies like ING and Amdocs. Modern tech stack includes TypeScript, Node.js, PostgreSQL, and e-commerce development."
     }
 
     if (!process.env.AI_GATEWAY_API_KEY) {
-      console.log("No AI Gateway API key available, using mock response")
+      // No AI Gateway API key available, using mock response
       const mockResult = generateMockResponse(userMessage, context, sources)
       
       // Log the conversation with enhanced database logging
@@ -148,7 +148,7 @@ export async function generateAIResponse(
 
       return response
     } catch (aiError) {
-      console.log("AI generation failed, using mock response:", aiError)
+      // AI generation failed, using mock response
       const mockResult = generateMockResponse(userMessage, context, sources)
       
       // Log failed attempt with fallback

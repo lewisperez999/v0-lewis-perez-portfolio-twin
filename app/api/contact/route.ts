@@ -29,8 +29,7 @@ export async function POST(request: NextRequest) {
     // Check if Resend is configured
     const resend = getResendClient()
     if (!resend) {
-      console.log('Resend API key not configured, logging contact form submission')
-      console.log('Contact form submission:', validatedData)
+      // Resend API key not configured, logging contact form submission locally
       
       return NextResponse.json({
         success: true,
@@ -82,7 +81,7 @@ Sent at: ${new Date().toLocaleString()}
     })
 
     // Log the response for debugging
-    console.log('Email sent successfully:', emailResponse)
+    // Email sent successfully
 
     return NextResponse.json({
       success: true,

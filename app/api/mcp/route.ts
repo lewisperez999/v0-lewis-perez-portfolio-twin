@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getToolsList, executeTool } from '@/app/mcp/server';
+import { getToolsList, executeTool, mcpTools } from '@/lib/mcp-tools';
 
 // Handle MCP protocol requests - Main endpoint for mcp-remote
 export async function POST(request: NextRequest) {
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
       version: '1.0.0',
       description: 'Professional digital twin MCP server for Lewis Perez portfolio',
       capabilities: ['tools'],
-      tools: Object.keys((await import('@/app/mcp/server')).mcpTools),
+      tools: Object.keys(mcpTools),
     },
     {
       headers: {

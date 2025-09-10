@@ -170,7 +170,7 @@ interface AIChatConversationOutput {
 
 #### 1.1 MCP Tool Handler (`app/mcp/tools/ai-chat-interface.ts`)
 ```typescript
-import { McpServer } from '@/app/mcp/server'
+import { mcpTools } from '@/lib/mcp-tools'
 import { generateAIResponse } from '@/app/actions/chat'
 import { z } from 'zod'
 

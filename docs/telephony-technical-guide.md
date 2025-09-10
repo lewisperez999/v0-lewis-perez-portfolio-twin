@@ -309,7 +309,7 @@ Parameters:
 
 ```typescript
 // /lib/telephony-service.ts
-import { executeTool } from '@/app/mcp/server';
+import { executeTool } from '@/lib/mcp-tools';
 import { CallSession } from '@/lib/types/telephony';
 
 export class TelephonyService {

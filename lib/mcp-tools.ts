@@ -1,18 +1,18 @@
-import { z } from 'zod';
 import { query } from '@/lib/database';
 import { searchVectors } from '@/lib/vector-search';
-import { 
-  createOrUpdateSession, 
-  getAIChatHistory, 
-  updateConversationHistory,
-  generateFollowUpQuestions,
-  logAIConversationAnalytics,
-  enhanceMessageWithPersona,
-  formatAIConversationResponse,
-  extractTopics,
-  extractTechnologies
-} from '@/lib/mcp-actions';
-import { generateAIResponse, type Message } from '@/app/actions/chat';
+import { aiChatConversationTool } from './mcp/ai-chat-conversation';
+// import { 
+//   createOrUpdateSession, 
+//   getAIChatHistory, 
+//   updateConversationHistory,
+//   generateFollowUpQuestions,
+//   logAIConversationAnalytics,
+//   enhanceMessageWithPersona,
+//   formatAIConversationResponse,
+//   extractTopics,
+//   extractTechnologies
+// } from '@/lib/mcp-actions';
+// import { generateAIResponse, type Message } from '@/app/actions/chat';
 
 // Define types for our tools
 export type SearchQuery = {
@@ -48,9 +48,7 @@ export type AIChatQuery = {
   session_id?: string;
   conversation_type: 'interview' | 'assessment' | 'exploration' | 'analysis';
   message: string;
-  context?: string;
   persona?: 'interviewer' | 'technical_assessor' | 'curious_explorer' | 'analyst';
-  ai_model?: string;
   include_sources?: boolean;
   start_new_session?: boolean;
   max_conversation_length?: number;
@@ -567,144 +565,10 @@ export const mcpTools = {
         };
       }
     }
-  },
-
-  ai_chat_conversation: {
-    name: 'ai_chat_conversation',
-    description: 'Have a conversation with Lewis Perez\'s AI portfolio system. Enables structured interviews, assessments, and interactive exploration.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        session_id: { type: 'string', description: 'Optional session ID to continue existing conversation' },
-        conversation_type: { 
-          type: 'string', 
-          enum: ['interview', 'assessment', 'exploration', 'analysis'], 
-          description: 'Type of conversation to conduct' 
-        },
-        message: { type: 'string', description: 'Message to send to the AI', minLength: 1, maxLength: 2000 },
-        context: { type: 'string', description: 'Additional context for the conversation' },
-        persona: { 
-          type: 'string', 
-          enum: ['interviewer', 'technical_assessor', 'curious_explorer', 'analyst'], 
-          description: 'Conversation persona to adopt' 
-        },
-        ai_model: { type: 'string', description: 'Specify AI model to use (e.g., "openai/gpt-4o")' },
-        include_sources: { type: 'boolean', default: true, description: 'Include source citations in response' },
-        start_new_session: { type: 'boolean', default: false, description: 'Force start a new conversation session' },
-        max_conversation_length: { type: 'number', minimum: 2, maximum: 100, description: 'Maximum conversation turns' },
-        response_format: { 
-          type: 'string', 
-          enum: ['detailed', 'concise', 'technical', 'conversational'], 
-          default: 'detailed', 
-          description: 'Response formatting style' 
-        }
-      },
-      required: ['conversation_type', 'message'],
-    },
-    handler: async ({ 
-      session_id, 
-      conversation_type, 
-      message, 
-      context, 
-      persona, 
-      ai_model, 
-      include_sources = true, 
-      start_new_session = false, 
-      max_conversation_length, 
-      response_format = 'detailed' 
-    }: AIChatQuery) => {
-      const startTime = Date.now();
-      
-      try {
-        // Generate or use session ID
-        const sessionId = start_new_session 
-          ? `ai_chat_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
-          : (session_id || `ai_chat_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`);
-
-        // Create session if it doesn't exist
-        await createOrUpdateSession(sessionId, conversation_type, persona, ai_model);
-
-        // Retrieve conversation history
-        const conversationHistory = await getAIChatHistory(sessionId);
-
-        // Enhance message with persona context
-        const enhancedMessage = enhanceMessageWithPersona(message, persona, conversation_type, context);
-
-        // Generate AI response using existing chat system
-        const aiResponse = await generateAIResponse(
-          enhancedMessage,
-          conversationHistory,
-          sessionId,
-          {
-            model: ai_model,
-            includeSources: include_sources,
-            responseFormat: response_format,
-            maxLength: max_conversation_length
-          }
-        );
-
-        // Update conversation history
-        const updatedHistory = await updateConversationHistory(sessionId, enhancedMessage, aiResponse.response);
-
-        // Generate follow-up suggestions
-        const followUpQuestions = await generateFollowUpQuestions(aiResponse.response, conversation_type, persona);
-
-        // Calculate session metrics
-        const responseTime = Date.now() - startTime;
-        await logAIConversationAnalytics(sessionId, {
-          conversation_turn: updatedHistory.length,
-          question_type: conversation_type,
-          response_quality_score: 0.9, // Placeholder - could be calculated
-          technical_depth_score: 0.8,  // Placeholder - could be calculated
-          topics_mentioned: extractTopics(aiResponse.response),
-          technologies_discussed: extractTechnologies(aiResponse.response),
-          sources_utilized: aiResponse.sources?.length || 0,
-          response_time_ms: responseTime
-        });
-
-        // Format response
-        return {
-          content: [
-            {
-              type: 'text',
-              text: formatAIConversationResponse(aiResponse, {
-                sessionId,
-                conversationType: conversation_type,
-                persona,
-                responseFormat: response_format,
-                followUpQuestions,
-                conversationTurn: updatedHistory.length
-              })
-            }
-          ],
-          metadata: {
-            session_id: sessionId,
-            conversation_type,
-            persona,
-            response_time_ms: responseTime,
-            model_used: ai_model || 'default',
-            conversation_turn: updatedHistory.length,
-            sources_consulted: aiResponse.sources?.length || 0,
-            session_status: {
-              is_active: true,
-              can_continue: updatedHistory.length < (max_conversation_length || 20),
-              suggested_next_questions: followUpQuestions
-            }
-          }
-        };
-      } catch (error) {
-        console.error('Error in AI chat conversation:', error);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Error in AI conversation: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or start a new session.`,
-            },
-          ],
-        };
-      }
-    }
   }
+
+  // AI Chat Conversation Tool
+  , ai_chat_conversation: aiChatConversationTool
 };
 
 // Get tools list for MCP discovery

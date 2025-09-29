@@ -1,6 +1,7 @@
 import { query } from '@/lib/database';
 import { searchVectors } from '@/lib/vector-search';
 import { aiChatConversationTool } from './mcp/ai-chat-conversation';
+import { experienceManagementTools } from './mcp/experience-management';
 // import { 
 //   createOrUpdateSession, 
 //   getAIChatHistory, 
@@ -31,12 +32,6 @@ export type SkillQuery = {
   skill_type?: 'technical' | 'soft' | 'language' | 'certification' | 'all';
   proficiency_level?: 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'all';
   category?: string;
-};
-
-export type ExperienceQuery = {
-  include_details?: boolean;
-  format?: 'chronological' | 'skills_based' | 'summary';
-  years?: number;
 };
 
 export type ContactQuery = {
@@ -343,138 +338,6 @@ export const mcpTools = {
     }
   },
 
-  get_experience_history: {
-    name: 'get_experience_history',
-    description: 'Retrieve detailed work experience and career history',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        include_details: { type: 'boolean', default: true, description: 'Include detailed descriptions and achievements' },
-        format: { 
-          type: 'string', 
-          enum: ['chronological', 'skills_based', 'summary'], 
-          default: 'chronological', 
-          description: 'Format for experience presentation' 
-        },
-        years: { type: 'number', description: 'Number of recent years to include' },
-      },
-      required: [],
-    },
-    handler: async ({ include_details = true, format = 'chronological', years }: ExperienceQuery) => {
-      try {
-        let queryString = 'SELECT * FROM experiences WHERE 1=1';
-        const params: any[] = [];
-
-        if (years) {
-          queryString += ` AND start_date >= NOW() - INTERVAL '${years} years'`;
-        }
-
-        queryString += ' ORDER BY start_date DESC';
-
-        const result = await query(queryString, params);
-        
-        if (!result || result.length === 0) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: 'No work experience found.',
-              },
-            ],
-          };
-        }
-
-        const experiences = result.map((exp: any) => ({
-          title: exp.position,
-          company: exp.company,
-          location: exp.location,
-          startDate: exp.start_date,
-          endDate: exp.end_date,
-          description: exp.description,
-          achievements: exp.achievements,
-          technologies: exp.technologies,
-        }));
-
-        let output = '';
-
-        switch (format) {
-          case 'chronological':
-            output = `Work Experience (${experiences.length} positions):\n\n`;
-            experiences.forEach((exp: any, index: number) => {
-              const duration = exp.endDate 
-                ? `${exp.startDate} - ${exp.endDate}`
-                : `${exp.startDate} - Present`;
-              
-              output += `${index + 1}. **${exp.title}** at **${exp.company}**\n`;
-              output += `   ${duration} | ${exp.location}\n`;
-              
-              if (include_details && exp.description) {
-                output += `   ${exp.description}\n`;
-              }
-              
-              if (include_details && exp.achievements) {
-                output += `   Key Achievements: ${exp.achievements}\n`;
-              }
-              
-              if (exp.technologies) {
-                output += `   Technologies: ${exp.technologies}\n`;
-              }
-              
-              output += '\n';
-            });
-            break;
-
-          case 'summary':
-            const totalYears = experiences.length > 0 ? 
-              new Date().getFullYear() - new Date(experiences[experiences.length - 1].startDate).getFullYear() : 0;
-            
-            output = `Career Summary:\n`;
-            output += `• ${totalYears}+ years of professional experience\n`;
-            output += `• ${experiences.length} positions across various companies\n`;
-            output += `• Current/Recent: ${experiences[0]?.title} at ${experiences[0]?.company}\n\n`;
-            
-            const companies = [...new Set(experiences.map((exp: any) => exp.company))];
-            output += `Companies worked for: ${companies.join(', ')}\n\n`;
-            
-            const allTech = experiences
-              .map((exp: any) => exp.technologies)
-              .filter(Boolean)
-              .join(', ')
-              .split(',')
-              .map((t: string) => t.trim())
-              .filter((t: string, i: number, arr: string[]) => arr.indexOf(t) === i);
-            
-            if (allTech.length > 0) {
-              output += `Technologies used: ${allTech.slice(0, 10).join(', ')}${allTech.length > 10 ? '...' : ''}\n`;
-            }
-            break;
-
-          default:
-            output = experiences.map((exp: any) => `${exp.title} at ${exp.company}`).join(', ');
-        }
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: output,
-            },
-          ],
-        };
-      } catch (error) {
-        console.error('Error getting experience history:', error);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Error getting experience history: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            },
-          ],
-        };
-      }
-    }
-  },
-
   get_contact_info: {
     name: 'get_contact_info',
     description: 'Retrieve contact information and professional links',
@@ -569,6 +432,13 @@ export const mcpTools = {
 
   // AI Chat Conversation Tool
   , ai_chat_conversation: aiChatConversationTool
+  
+  // Experience Management Tools
+  , create_experience: experienceManagementTools[0]
+  , get_experiences: experienceManagementTools[1]
+  , update_experience: experienceManagementTools[2]
+  , delete_experience: experienceManagementTools[3]
+  , get_experience_stats: experienceManagementTools[4]
 };
 
 // Get tools list for MCP discovery

@@ -5,13 +5,58 @@ import { auth, clerkClient } from '@clerk/nextjs/server'
 
 // Handle MCP protocol requests - Main endpoint for mcp-remote
 const handler = async function (request: Request): Promise<Response> {
-// Handle MCP protocol requests - Main endpoint for mcp-remote
   try {
-    // Get the request body (MCP JSON-RPC format)
-    const body = await request.json();
-    const { jsonrpc, method, params: methodParams, id } = body;
+    let body: any = {};
+    let jsonrpc: string = '2.0';
+    let method: string = '';
+    let methodParams: any = {};
+    let id: any = null;
 
-    console.log('MCP Request:', { method, params: methodParams, id });
+    // Only parse JSON for POST requests or requests with a body
+    if (request.method === 'POST' || request.method === 'PUT') {
+      try {
+        const requestText = await request.text();
+        if (requestText.trim()) {
+          body = JSON.parse(requestText);
+          ({ jsonrpc, method, params: methodParams, id } = body);
+        }
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        return Response.json(
+          {
+            jsonrpc: '2.0',
+            error: {
+              code: -32700,
+              message: 'Parse error: Invalid JSON',
+            },
+            id: null,
+          },
+          { status: 400 }
+        );
+      }
+    } else if (request.method === 'GET') {
+      // For GET requests, we might handle discovery or health checks
+      method = 'tools/list'; // Default to listing tools for GET requests
+      methodParams = {};
+      id = Date.now();
+    }
+
+    console.log('MCP Request:', { method: request.method, mcp_method: method, params: methodParams, id });
+
+    // If no method specified, return error
+    if (!method) {
+      return Response.json(
+        {
+          jsonrpc: '2.0',
+          error: {
+            code: -32600,
+            message: 'Invalid Request: method required',
+          },
+          id,
+        },
+        { status: 400 }
+      );
+    }
 
     let result: any;
 
@@ -46,6 +91,18 @@ const handler = async function (request: Request): Promise<Response> {
       case 'ping':
         result = {};
         break;
+
+      case 'options':
+        // Handle CORS preflight
+        return new Response(null, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, mcp-session-id',
+            'Access-Control-Max-Age': '86400',
+          },
+        });
 
       default:
         return Response.json(

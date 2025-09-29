@@ -1,10 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowDown, MessageCircle } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { ArrowDown, MessageCircle, Mic } from "lucide-react"
 import Image from "next/image"
+import { VoiceChat } from "@/components/voice-chat"
 
 export function Hero() {
+  const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
     if (element) {
@@ -36,6 +41,22 @@ export function Hero() {
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Chat with My AI
               </Button>
+              {process.env.NEXT_PUBLIC_REALTIME_FLAG === 'ENABLED' && (
+                <Dialog open={voiceDialogOpen} onOpenChange={setVoiceDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="secondary" size="lg" className="group">
+                      <Mic className="mr-2 h-4 w-4" />
+                      Speak with My AI
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-2xl sm:max-h-[700px]">
+                    <DialogHeader>
+                      <DialogTitle>Voice Chat with Lewis's AI Assistant</DialogTitle>
+                    </DialogHeader>
+                    <VoiceChat voice="alloy" className="h-[500px]" />
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </div>
 
@@ -45,7 +66,7 @@ export function Hero() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-3xl"></div>
               <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-primary/20 bg-muted">
                 <Image
-                  src="/professional-developer-portrait.jpg"
+                  src="/professional-developer-portrait.avif"
                   alt="Lewis Perez - Professional Developer"
                   fill
                   className="object-cover"

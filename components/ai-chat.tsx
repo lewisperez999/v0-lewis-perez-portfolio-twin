@@ -235,7 +235,7 @@ export function AIChat({ className }: AIChatProps) {
             {loadingSuggestions ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-16 bg-muted/50 rounded-md animate-pulse" />
+                  <div key={i} className="h-16 bg-muted animate-pulse rounded-md" />
                 ))}
               </div>
             ) : (

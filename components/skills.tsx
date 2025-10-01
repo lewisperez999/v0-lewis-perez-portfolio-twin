@@ -28,10 +28,16 @@ export async function Skills() {
     .sort()
 
   return (
-    <section id="skills" className="py-20 bg-muted/30">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Skills & Expertise</h2>
+    <section id="skills" className="py-20 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-cyan-500/5"></div>
+      <div className="absolute bottom-10 left-10 w-72 h-72 bg-gradient-to-r from-blue-400/10 to-cyan-400/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="text-center mb-16 animate-fade-in">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-foreground">
+            <span className="gradient-text">Skills & Expertise</span>
+          </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Enterprise-grade technologies with proven results
           </p>

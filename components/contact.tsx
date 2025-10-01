@@ -105,10 +105,16 @@ export function Contact() {
   ]
 
   return (
-    <section id="contact" className="py-20">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Get In Touch</h2>
+    <section id="contact" className="py-20 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-blue-500/10"></div>
+      <div className="absolute top-20 right-20 w-80 h-80 bg-gradient-to-r from-pink-400/10 to-purple-400/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="text-center mb-16 animate-fade-in">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-foreground">
+            <span className="gradient-text">Get In Touch</span>
+          </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Ready to work together? Let&apos;s discuss your next project
           </p>
@@ -116,7 +122,7 @@ export function Contact() {
 
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Contact Form */}
-          <Card>
+          <Card className="glass dark:glass-dark border-border dark:border-white/10 hover-glow animate-fade-in">
             <CardHeader>
               <CardTitle>Send a Message</CardTitle>
             </CardHeader>
@@ -154,7 +160,7 @@ export function Contact() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button type="submit" className="w-full glow-primary hover-glow bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border-0 text-white font-semibold" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

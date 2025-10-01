@@ -4,76 +4,116 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated color tokens to match the design brief with cyan/emerald theme */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.35 0 0);
-  --card: oklch(0.98 0.02 180);
-  --card-foreground: oklch(0.25 0.08 200);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.35 0 0);
-  --primary: oklch(0.25 0.08 200);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.65 0.15 160);
-  --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.96 0.01 180);
-  --muted-foreground: oklch(0.35 0 0);
-  --accent: oklch(0.65 0.15 160);
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.35 0 0);
-  --input: oklch(0.98 0.02 180);
-  --ring: oklch(0.65 0.15 160);
-  --chart-1: oklch(0.6 0.15 160);
-  --chart-2: oklch(0.577 0.245 27.325);
-  --chart-3: oklch(0.65 0.15 160);
-  --chart-4: oklch(0.25 0.08 200);
-  --chart-5: oklch(0.7 0.2 80);
+  /* AI-themed color system with gradients and glow effects */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
   --radius: 0.5rem;
-  --sidebar: oklch(0.98 0.02 180);
-  --sidebar-foreground: oklch(0.35 0 0);
-  --sidebar-primary: oklch(0.25 0.08 200);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.65 0.15 160);
-  --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0.35 0 0);
-  --sidebar-ring: oklch(0.65 0.15 160);
+  --chart-1: 12 76% 61%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+
+  /* AI-themed gradient variables - Light mode with 20% darker colors */
+  --gradient-hero: linear-gradient(135deg, 
+    rgb(11, 132, 186) 0%, 
+    rgb(47, 104, 197) 25%, 
+    rgb(118, 41, 187) 50%, 
+    rgb(189, 58, 122) 75%, 
+    rgb(191, 54, 54) 100%);
+  
+  --gradient-accent: linear-gradient(90deg, 
+    rgb(5, 146, 170) 0%, 
+    rgb(47, 104, 197) 50%, 
+    rgb(118, 41, 187) 100%);
+  
+  --gradient-card: linear-gradient(135deg, 
+    rgba(5, 146, 170, 0.15) 0%, 
+    rgba(47, 104, 197, 0.15) 50%, 
+    rgba(118, 41, 187, 0.15) 100%);
+  
+  --gradient-subtle: linear-gradient(135deg, 
+    rgba(11, 132, 186, 0.08) 0%, 
+    rgba(118, 41, 187, 0.08) 100%);
+
+  /* Glow effects - Enhanced for light mode */
+  --glow-primary: 0 0 30px rgba(47, 104, 197, 0.4);
+  --glow-secondary: 0 0 20px rgba(5, 146, 170, 0.3);
+  --glow-accent: 0 0 25px rgba(118, 41, 187, 0.35);
+  --glow-hover: 0 0 40px rgba(47, 104, 197, 0.5);
 }
 
 .dark {
-  /* Updated dark theme colors to maintain the cyan/emerald aesthetic */
-  --background: oklch(0.08 0.02 200);
-  --foreground: oklch(0.98 0.01 180);
-  --card: oklch(0.12 0.02 200);
-  --card-foreground: oklch(0.98 0.01 180);
-  --popover: oklch(0.08 0.02 200);
-  --popover-foreground: oklch(0.98 0.01 180);
-  --primary: oklch(0.98 0.01 180);
-  --primary-foreground: oklch(0.08 0.02 200);
-  --secondary: oklch(0.65 0.15 160);
-  --secondary-foreground: oklch(0.08 0.02 200);
-  --muted: oklch(0.15 0.02 200);
-  --muted-foreground: oklch(0.7 0.01 180);
-  --accent: oklch(0.65 0.15 160);
-  --accent-foreground: oklch(0.08 0.02 200);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.15 0.02 200);
-  --input: oklch(0.15 0.02 200);
-  --ring: oklch(0.65 0.15 160);
-  --chart-1: oklch(0.6 0.15 160);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.65 0.15 160);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.12 0.02 200);
-  --sidebar-foreground: oklch(0.98 0.01 180);
-  --sidebar-primary: oklch(0.65 0.15 160);
-  --sidebar-primary-foreground: oklch(0.08 0.02 200);
-  --sidebar-accent: oklch(0.15 0.02 200);
-  --sidebar-accent-foreground: oklch(0.98 0.01 180);
-  --sidebar-border: oklch(0.15 0.02 200);
-  --sidebar-ring: oklch(0.65 0.15 160);
+  /* Dark theme with AI aesthetic */
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+
+  /* Enhanced gradient variables for dark theme */
+  --gradient-hero: linear-gradient(135deg, 
+    rgba(14, 165, 233, 0.8) 0%, 
+    rgba(59, 130, 246, 0.8) 25%, 
+    rgba(147, 51, 234, 0.8) 50%, 
+    rgba(236, 72, 153, 0.8) 75%, 
+    rgba(239, 68, 68, 0.8) 100%);
+  
+  --gradient-accent: linear-gradient(90deg, 
+    rgba(6, 182, 212, 0.6) 0%, 
+    rgba(59, 130, 246, 0.6) 50%, 
+    rgba(147, 51, 234, 0.6) 100%);
+  
+  --gradient-card: linear-gradient(135deg, 
+    rgba(6, 182, 212, 0.15) 0%, 
+    rgba(59, 130, 246, 0.15) 50%, 
+    rgba(147, 51, 234, 0.15) 100%);
+  
+  --gradient-subtle: linear-gradient(135deg, 
+    rgba(14, 165, 233, 0.1) 0%, 
+    rgba(147, 51, 234, 0.1) 100%);
+
+  /* Enhanced glow effects for dark theme */
+  --glow-primary: 0 0 40px rgba(59, 130, 246, 0.4);
+  --glow-secondary: 0 0 30px rgba(6, 182, 212, 0.3);
+  --glow-accent: 0 0 35px rgba(147, 51, 234, 0.35);
+  --glow-hover: 0 0 50px rgba(59, 130, 246, 0.5);
 }
 
 @theme inline {
@@ -127,6 +167,7 @@
 }
 
 @layer utilities {
+  /* Enhanced animations for AI theme */
   @keyframes shimmer {
     0% {
       transform: translateX(-100%);
@@ -134,5 +175,122 @@
     100% {
       transform: translateX(100%);
     }
+  }
+
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: var(--glow-primary);
+    }
+    50% {
+      box-shadow: var(--glow-hover);
+    }
+  }
+
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  /* Utility classes for animations */
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out;
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
+  .animate-gradient-shift {
+    animation: gradient-shift 6s ease infinite;
+    background-size: 200% 200%;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Gradient text utilities */
+  .gradient-text {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% 200%;
+  }
+
+  .gradient-text-animated {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% 200%;
+    animation: gradient-shift 4s ease infinite;
+  }
+
+  /* Glass morphism utilities */
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Light mode specific glass */
+  .glass-light {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Glow utilities */
+  .glow-primary {
+    box-shadow: var(--glow-primary);
+  }
+
+  .glow-secondary {
+    box-shadow: var(--glow-secondary);
+  }
+
+  .glow-accent {
+    box-shadow: var(--glow-accent);
+  }
+
+  .hover-glow:hover {
+    box-shadow: var(--glow-hover);
+    transition: box-shadow 0.3s ease;
   }
 }

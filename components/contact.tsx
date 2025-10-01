@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Mail, Phone, MapPin, Github, Linkedin, Twitter, Send } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 
 export function Contact() {
@@ -17,6 +17,66 @@ export function Contact() {
     message: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Load Calendly widget script
+  useEffect(() => {
+    // Check if script already exists
+    const existingScript = document.querySelector('script[src*="calendly.com"]')
+    if (existingScript) {
+      console.log('Calendly script already loaded')
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://assets.calendly.com/assets/external/widget.js'
+    script.async = true
+    script.onload = () => {
+      console.log('Calendly script loaded successfully')
+    }
+    script.onerror = () => {
+      console.error('Failed to load Calendly script')
+    }
+    document.head.appendChild(script)
+
+    // Also add Calendly CSS
+    const link = document.createElement('link')
+    link.href = 'https://assets.calendly.com/assets/external/widget.css'
+    link.rel = 'stylesheet'
+    document.head.appendChild(link)
+
+    return () => {
+      // Cleanup on unmount
+      if (document.head.contains(script)) {
+        document.head.removeChild(script)
+      }
+      if (document.head.contains(link)) {
+        document.head.removeChild(link)
+      }
+    }
+  }, [])
+
+  const openCalendly = () => {
+    console.log('Button clicked, checking for Calendly...')
+    // Type assertion for Calendly
+    const calendly = (window as any).Calendly
+    
+    console.log('Calendly object:', calendly)
+    
+    if (calendly && typeof calendly.initPopupWidget === 'function') {
+      console.log('Opening Calendly popup...')
+      calendly.initPopupWidget({
+        url: 'https://calendly.com/lewisperez12152017'
+      })
+      return true
+    } else {
+      console.error('Calendly script not loaded yet or initPopupWidget not available')
+      toast.error('Calendly is loading', {
+        description: 'Please try again in a moment.',
+        duration: 3000,
+      })
+      return false
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -231,7 +291,20 @@ export function Contact() {
                 <p className="text-sm text-muted-foreground mb-4">
                   I&apos;m always open to discussing new opportunities and interesting projects.
                 </p>
-                <Button variant="outline" className="group bg-transparent">
+                <Button 
+                  variant="outline" 
+                  className="group bg-transparent"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    const success = openCalendly()
+                    // Fallback to direct link if popup fails
+                    if (!success) {
+                      setTimeout(() => {
+                        window.open('https://calendly.com/lewisperez12152017', '_blank')
+                      }, 1000)
+                    }
+                  }}
+                >
                   <Mail className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                   Schedule a Call
                 </Button>

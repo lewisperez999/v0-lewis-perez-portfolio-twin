@@ -29,7 +29,7 @@ export async function Experience() {
           {experiences.map((exp, index) => (
             <Card 
               key={exp.id} 
-              className="group glass-dark border-white/10 hover-glow transition-all duration-500 animate-fade-in" 
+              className="group glass dark:glass-dark border-border dark:border-white/10 hover-glow transition-all duration-500 animate-fade-in" 
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <CardHeader className="pb-4">

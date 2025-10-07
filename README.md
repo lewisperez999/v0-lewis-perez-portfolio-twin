@@ -90,6 +90,14 @@ Instead of just reading about experience and skills, visitors can chat with an i
 - **Automatic Transcription**: Written record of voice conversations
 - **Audio Quality Monitoring**: Ensures clear, professional communication
 
+### **📅 Intelligent Scheduling Integration**
+- **AI-Powered Booking**: Schedule meetings through natural conversation
+- **Voice-Activated Scheduling**: "Book a call with Lewis" - it's that simple
+- **Real-Time Availability**: Live calendar integration with automatic updates
+- **Meeting Type Selection**: Choose from various consultation options
+- **Automated Notifications**: Webhook-based event tracking and alerts
+- **Personalized Booking Links**: Pre-filled information for seamless booking
+
 ### **⚙️ Professional Admin Management**
 - **Content Management System**: Easy updates without technical knowledge
 - **Real-time Health Monitoring**: System status and performance tracking
@@ -113,6 +121,7 @@ Instead of just reading about experience and skills, visitors can chat with an i
 - **Vector Embeddings** - Semantic understanding and search
 - **PostgreSQL + pg-vector** - Intelligent data retrieval system
 - **MCP Protocol** - Standardized AI tool integration
+- **Calendly API** - Real-time scheduling and availability management
 
 ### **💾 Backend & Infrastructure** 
 - **PostgreSQL Database** - Robust, scalable data storage
@@ -293,7 +302,10 @@ pnpm dev
 - **[📋 Technical Overview](./docs/TECHNICAL_OVERVIEW.md)**: Comprehensive system architecture and features
 - **[🔧 AI Chat Configuration](./docs/AI_CHAT_CONFIGURATION.md)**: Advanced chat settings and options
 - **[🎙️ Voice AI Integration](./docs/voice-ai-executive-summary.md)**: Voice features and roadmap
-- **[🔒 Security Audit Report](./docs/SECURITY_AUDIT_PASSED.md)**: Security implementation details
+- **[� Calendly Integration Guide](./docs/CALENDLY_INTEGRATION.md)**: Complete scheduling system documentation
+- **[🚀 Quick Start: Calendly](./docs/QUICK_START_CALENDLY.md)**: Get scheduling working in 5 minutes
+- **[🏗️ Calendly Architecture](./docs/CALENDLY_ARCHITECTURE.md)**: System design and data flow
+- **[�🔒 Security Audit Report](./docs/SECURITY_AUDIT_PASSED.md)**: Security implementation details
 - **[🛠️ MCP Server Documentation](./docs/MCP_SERVER_DOCS.md)**: API integration guide
 
 ### **Setup Guides**

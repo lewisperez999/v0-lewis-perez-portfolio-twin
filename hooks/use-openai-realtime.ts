@@ -34,6 +34,7 @@ interface UseOpenAIRealtimeReturn {
 export default function useOpenAIRealtime(
   voice: string = "alloy",
   tools?: Tool[],
+  userName?: string,
 ): UseOpenAIRealtimeReturn {
   // Connection/session states
   const [status, setStatus] = useState("");
@@ -79,20 +80,46 @@ export default function useOpenAIRealtime(
    * Configure the data channel on open, sending a session update to the server.
    */
   function configureDataChannel(dataChannel: RTCDataChannel) {
+    // Build greeting based on user name
+    const greeting = userName ? `Hi ${userName}!` : "Hi!";
+    
+    // Build instructions with personalized greeting
+    const instructions = `You are Lewis Perez's AI assistant, speaking directly to ${userName ? userName : "the user"}.
+
+IMPORTANT: ${userName ? `Always greet ${userName} by name. Start your first response with "${greeting}"` : "Be warm and welcoming in your greeting."}
+
+You help people learn about Lewis's professional background:
+- Senior Software Engineer with 8+ years of experience
+- Currently Full Stack Developer (freelancing since Mar 2025)
+- Strong enterprise background: ING, Amdocs, IBM
+- Modern stack: React, Next.js, TypeScript, Node.js
+- Backend expertise: Java/Spring Boot, PostgreSQL, AWS
+- E-commerce: Shopify development, payment integrations
+
+Speak naturally and conversationally. Be helpful and professional.
+${userName ? `Remember to use ${userName}'s name naturally in conversation.` : ""}`;
+
     // Send session update
     const sessionUpdate = {
       type: "session.update",
       session: {
         modalities: ["text", "audio"],
+        instructions: instructions,
         tools: tools || [],
         input_audio_transcription: {
           model: "whisper-1",
+        },
+        turn_detection: {
+          type: "server_vad",
+          threshold: 0.5,
+          prefix_padding_ms: 300,
+          silence_duration_ms: 1000,
         },
       },
     };
     dataChannel.send(JSON.stringify(sessionUpdate));
 
-    console.log("Session update sent:", sessionUpdate);
+    console.log("Session update sent with instructions for:", userName || "anonymous user");
   }
 
   /**

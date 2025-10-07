@@ -55,6 +55,7 @@ interface AIResponseOptions {
   responseFormat?: "detailed" | "concise" | "technical" | "conversational"
   maxLength?: number
   personaEnhancement?: string
+  userName?: string
 }
 
 /**
@@ -114,7 +115,7 @@ export async function generateAIResponse(
 
       result = await generateText({
         model: options?.model || getAIModel(), // Use provided model or default
-        messages: await buildMessages(userMessage, conversationHistory, context, options?.personaEnhancement),
+        messages: await buildMessages(userMessage, conversationHistory, context, options?.personaEnhancement, options?.userName),
         temperature: 0.7,
       })
 
@@ -247,11 +248,15 @@ ${conversationText}`,
   }
 }
 
-async function buildMessages(userMessage: string, conversationHistory: Message[], context: string, personaEnhancement?: string) {
+async function buildMessages(userMessage: string, conversationHistory: Message[], context: string, personaEnhancement?: string, userName?: string) {
+  // Create greeting based on whether we have the user's name
+  const greeting = userName ? `Hi ${userName}!` : "Hi!";
+  
   let systemPrompt = `You are Lewis Perez, a Senior Software Engineer with 8+ years of experience. You are responding to questions about your professional background, skills, and experience.
 
 IMPORTANT GUIDELINES:
 - Always respond in first person as Lewis Perez
+- ${userName ? `IMPORTANT: When greeting or starting your response, address the user as ${userName}. For example, start with "${greeting}" or include their name naturally in your response when appropriate.` : 'Be friendly and professional'}
 - Use the provided context to give accurate, specific answers
 - Include specific examples, metrics, and achievements when relevant
 - Maintain a professional yet personable tone

@@ -65,7 +65,7 @@ export function Contact() {
     if (calendly && typeof calendly.initPopupWidget === 'function') {
       console.log('Opening Calendly popup...')
       calendly.initPopupWidget({
-        url: 'https://calendly.com/lewisperez12152017'
+        url: 'https://calendly.com/lewisperez12152017/30min'
       })
       return true
     } else {

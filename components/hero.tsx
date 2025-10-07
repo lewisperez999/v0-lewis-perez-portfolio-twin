@@ -74,11 +74,16 @@ export function Hero() {
                       Speak with My AI
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-2xl sm:max-h-[700px] glass dark:glass-dark border-border dark:border-white/20">
-                    <DialogHeader>
-                      <DialogTitle className="gradient-text text-xl">Voice Chat with Lewis&apos;s AI Assistant</DialogTitle>
-                    </DialogHeader>
-                    <VoiceChat voice="alloy" className="h-[500px]" />
+                  <DialogContent className="sm:max-w-3xl w-[95vw] h-[85vh] bg-background/95 backdrop-blur-md border border-border dark:border-white/20 shadow-2xl p-0 flex flex-col">
+                    <div className="p-6 pb-4 border-b border-border/50 shrink-0">
+                      <DialogHeader>
+                        <DialogTitle className="gradient-text text-2xl font-bold">Voice Chat with Lewis&apos;s AI Assistant</DialogTitle>
+                        <p className="text-sm text-white/80 mt-2">Have a natural conversation about my experience, skills, and projects</p>
+                      </DialogHeader>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <VoiceChat voice="alloy" className="h-full" />
+                    </div>
                   </DialogContent>
                 </Dialog>
               </SignedIn>

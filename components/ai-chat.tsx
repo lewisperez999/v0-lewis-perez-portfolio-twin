@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { generateAIResponse, getSuggestedQuestions, Message } from '@/app/actions/chat'
 import { MessageCircle, Send, Bot, User, Sparkles, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useUser } from '@clerk/nextjs'
 
 interface ChatMessage extends Message {
   isLoading?: boolean
@@ -25,6 +26,7 @@ interface AIChatProps {
 }
 
 export function AIChat({ className }: AIChatProps) {
+  const { user } = useUser()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -34,6 +36,9 @@ export function AIChat({ className }: AIChatProps) {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  
+  // Get user's first name for personalization
+  const userName = user?.firstName || undefined
 
   // Auto-scroll to bottom when new messages are added
   const scrollToBottom = () => {
@@ -102,7 +107,7 @@ export function AIChat({ className }: AIChatProps) {
     setMessages(prev => [...prev, loadingMessage])
 
     try {
-      const response = await generateAIResponse(userMessage, messages)
+      const response = await generateAIResponse(userMessage, messages, undefined, { userName })
       
       // Replace loading message with actual response
       setMessages(prev => prev.map(msg => 

@@ -83,7 +83,19 @@ export default function useOpenAIRealtime(
     // Build greeting based on user name
     const greeting = userName ? `Hi ${userName}!` : "Hi!";
     
-    // Build instructions with personalized greeting
+    // Get current date/time in Australia/Sydney timezone
+    const sydneyTime = new Date().toLocaleString("en-AU", { timeZone: "Australia/Sydney" });
+    const now = new Date(sydneyTime);
+    const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
+    const userTimezone = "Australia/Sydney (Melbourne uses same timezone)";
+    
+    // Calculate tomorrow's date
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDate = tomorrow.toISOString().split('T')[0];
+    
+    // Build instructions with personalized greeting AND time conversion guidance
     const instructions = `You are Lewis Perez's AI assistant, speaking directly to ${userName ? userName : "the user"}.
 
 IMPORTANT: ${userName ? `Always greet ${userName} by name. Start your first response with "${greeting}"` : "Be warm and welcoming in your greeting."}
@@ -95,6 +107,26 @@ You help people learn about Lewis's professional background:
 - Modern stack: React, Next.js, TypeScript, Node.js
 - Backend expertise: Java/Spring Boot, PostgreSQL, AWS
 - E-commerce: Shopify development, payment integrations
+
+MEETING SCHEDULING - CRITICAL TIME CONVERSION RULES:
+Current date: ${currentDate}
+Current time: ${currentTime}
+Timezone: ${userTimezone}
+
+When converting times for schedule_google_meet tool:
+- ALL TIMES ARE IN AUSTRALIA/SYDNEY TIMEZONE (AEDT/AEST)
+- "2pm" or "2:00pm" = 14:00 in 24-hour format
+- "10am" or "10:00am" = 10:00 in 24-hour format
+- "today at 2pm" = ${currentDate}T14:00:00
+- "tomorrow at 10am" = ${tomorrowDate}T10:00:00
+- Always use format: YYYY-MM-DDTHH:MM:SS (24-hour time)
+- PM times: add 12 to hour (2pm = 14:00, 3pm = 15:00, 8pm = 20:00)
+- AM times: use as-is (10am = 10:00, 11am = 11:00, 8am = 08:00)
+- NEVER use 02:00 for 2pm - that's 2am! 2pm = 14:00
+
+Examples:
+- User says "2pm today" → startTime: "${currentDate}T14:00:00"
+- User says "10am tomorrow" → startTime: "${tomorrowDate}T10:00:00"
 
 Speak naturally and conversationally. Be helpful and professional.
 ${userName ? `Remember to use ${userName}'s name naturally in conversation.` : ""}`;
@@ -119,7 +151,10 @@ ${userName ? `Remember to use ${userName}'s name naturally in conversation.` : "
     };
     dataChannel.send(JSON.stringify(sessionUpdate));
 
-    console.log("Session update sent with instructions for:", userName || "anonymous user");
+    console.log(`📋 Session configured for: ${userName || "anonymous user"}`);
+    console.log(`🌏 Timezone: ${userTimezone}`);
+    console.log(`📅 Current date: ${currentDate}`);
+    console.log(`⏰ Current time: ${currentTime}`);
   }
 
   /**

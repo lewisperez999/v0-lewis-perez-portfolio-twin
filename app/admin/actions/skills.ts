@@ -1,6 +1,7 @@
 "use server"
 
 import { query, transaction } from "@/lib/database"
+import { ensureTable } from "@/lib/table-init"
 import { revalidatePath } from "next/cache"
 
 // Database row interface for skills table
@@ -32,27 +33,20 @@ export interface Skill {
 
 // Ensure skills table exists (already defined in schema, but ensure it's there)
 async function ensureSkillsTable(): Promise<void> {
-  try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS skills (
-        id INTEGER PRIMARY KEY,
-        professional_id INTEGER,
-        category VARCHAR(100),
-        skill_name VARCHAR(255),
-        proficiency VARCHAR(50),
-        experience_years VARCHAR(50),
-        context TEXT,
-        projects TEXT[],
-        skill_type VARCHAR(100),
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `)
-
-    console.log("Skills table ensured")
-  } catch (error) {
-    console.error("Error ensuring skills table:", error)
-    throw error
-  }
+  return ensureTable('skills', `
+    CREATE TABLE IF NOT EXISTS skills (
+      id INTEGER PRIMARY KEY,
+      professional_id INTEGER,
+      category VARCHAR(100),
+      skill_name VARCHAR(255),
+      proficiency VARCHAR(50),
+      experience_years VARCHAR(50),
+      context TEXT,
+      projects TEXT[],
+      skill_type VARCHAR(100),
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `)
 }
 
 // Get all skills

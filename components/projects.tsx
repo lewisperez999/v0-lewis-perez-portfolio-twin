@@ -3,13 +3,22 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ExternalLink, Github } from "lucide-react"
 import { getFeaturedProjects, initializeDefaultProjects } from "@/app/admin/actions/projects"
+import { safeDbOperation } from "@/lib/safe-db-operation"
 
 export async function Projects() {
-  // Initialize default data if needed
-  await initializeDefaultProjects()
+  // Initialize default data if needed (with error handling)
+  await safeDbOperation(
+    () => initializeDefaultProjects(),
+    undefined,
+    'initializeDefaultProjects'
+  )
   
-  // Get featured projects from database
-  const projects = await getFeaturedProjects()
+  // Get featured projects from database (with fallback to empty array)
+  const projects = await safeDbOperation(
+    () => getFeaturedProjects(),
+    [],
+    'getFeaturedProjects'
+  )
 
   return (
     <section id="projects" className="py-20 relative overflow-hidden">

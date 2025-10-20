@@ -1,9 +1,14 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Code, Globe, Users, Zap } from "lucide-react"
 import { getPersonalInfo } from "@/app/admin/actions/personal-info"
+import { safeDbOperation } from "@/lib/safe-db-operation"
 
 export async function About() {
-  const personalInfo = await getPersonalInfo()
+  const personalInfo = await safeDbOperation(
+    () => getPersonalInfo(),
+    null,
+    'getPersonalInfo'
+  )
 
   const highlights = [
     {

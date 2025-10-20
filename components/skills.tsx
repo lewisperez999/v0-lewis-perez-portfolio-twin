@@ -2,13 +2,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { getSkillsByCategory, initializeDefaultSkills } from "@/app/admin/actions/skills"
+import { safeDbOperation } from "@/lib/safe-db-operation"
 
 export async function Skills() {
-  // Initialize default data if needed
-  await initializeDefaultSkills()
+  // Initialize default data if needed (with error handling)
+  await safeDbOperation(
+    () => initializeDefaultSkills(),
+    undefined,
+    'initializeDefaultSkills'
+  )
   
-  // Get skills grouped by category from database
-  const skillsByCategory = await getSkillsByCategory()
+  // Get skills grouped by category from database (with fallback to empty object)
+  const skillsByCategory = await safeDbOperation(
+    () => getSkillsByCategory(),
+    {} as Record<string, any[]>,
+    'getSkillsByCategory'
+  )
 
   // Define main skill categories for the grid layout with progress bars
   const mainCategories = [

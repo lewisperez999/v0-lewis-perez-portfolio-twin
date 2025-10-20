@@ -3,7 +3,35 @@
 
 import { query } from "./database"
 
+// Singleton pattern with lock to prevent concurrent initialization
+let isInitializing = false
+let isInitialized = false
+let initializationPromise: Promise<void> | null = null
+
 export async function initializeDatabase(): Promise<void> {
+  // If already initialized, return immediately
+  if (isInitialized) {
+    return
+  }
+
+  // If currently initializing, wait for it to complete
+  if (isInitializing && initializationPromise) {
+    return initializationPromise
+  }
+
+  // Set lock and create promise
+  isInitializing = true
+  initializationPromise = performInitialization()
+  
+  try {
+    await initializationPromise
+    isInitialized = true
+  } finally {
+    isInitializing = false
+  }
+}
+
+async function performInitialization(): Promise<void> {
   try {
     console.log("🗄️  Initializing database...")
 
@@ -58,7 +86,15 @@ export async function initializeDatabase(): Promise<void> {
   }
 }
 
-// Auto-initialize when this module is imported
-if (process.env.NODE_ENV !== 'test') {
-  initializeDatabase()
+// Only auto-initialize at runtime (not during build)
+// Check if we're in a browser or server runtime context
+if (
+  process.env.NODE_ENV !== 'test' && 
+  typeof process.env.NEXT_PHASE === 'undefined' &&
+  process.env.VERCEL_ENV !== undefined
+) {
+  // Only run on Vercel runtime, not during build
+  initializeDatabase().catch(err => {
+    console.error('Failed to auto-initialize database:', err)
+  })
 }

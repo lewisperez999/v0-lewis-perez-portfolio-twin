@@ -1,6 +1,7 @@
 "use server"
 
 import { query, transaction } from "@/lib/database"
+import { ensureTable } from "@/lib/table-init"
 import { revalidatePath } from "next/cache"
 
 // Database row interface for personal_info table
@@ -44,41 +45,34 @@ export interface PersonalInfo {
 
 // Ensure personal_info table exists
 async function ensurePersonalInfoTable(): Promise<void> {
+  await ensureTable('personal_info', `
+    CREATE TABLE IF NOT EXISTS personal_info (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name VARCHAR(255) NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      location VARCHAR(255),
+      email VARCHAR(255),
+      phone VARCHAR(50),
+      summary TEXT,
+      bio TEXT,
+      tagline TEXT,
+      highlights TEXT[],
+      website VARCHAR(500),
+      linkedin VARCHAR(500),
+      github VARCHAR(500),
+      twitter VARCHAR(500),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  `)
+
+  // Create index for faster queries (with error handling)
   try {
     await query(`
-      CREATE TABLE IF NOT EXISTS personal_info (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name VARCHAR(255) NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        location VARCHAR(255),
-        email VARCHAR(255),
-        phone VARCHAR(50),
-        summary TEXT,
-        bio TEXT,
-        tagline TEXT,
-        highlights TEXT[],
-        website VARCHAR(500),
-        linkedin VARCHAR(500),
-        github VARCHAR(500),
-        twitter VARCHAR(500),
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-      )
+      CREATE INDEX IF NOT EXISTS idx_personal_info_created_at ON personal_info(created_at DESC)
     `)
-
-    // Create index for faster queries (with error handling)
-    try {
-      await query(`
-        CREATE INDEX IF NOT EXISTS idx_personal_info_created_at ON personal_info(created_at DESC)
-      `)
-    } catch (indexError) {
-      console.log("Index idx_personal_info_created_at already exists or cannot be created:", (indexError as Error).message)
-    }
-
-    console.log("Personal info table ensured")
-  } catch (error) {
-    console.error("Error ensuring personal info table:", error)
-    throw error
+  } catch (indexError) {
+    // Index might already exist, ignore error
   }
 }
 

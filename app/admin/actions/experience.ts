@@ -1,6 +1,7 @@
 "use server"
 
 import { query, transaction } from "@/lib/database"
+import { ensureTable } from "@/lib/table-init"
 import { revalidatePath } from "next/cache"
 
 // Database row interface for experiences table
@@ -40,31 +41,24 @@ export interface Experience {
 
 // Ensure experiences table exists (already defined in schema, but ensure it's there)
 async function ensureExperiencesTable(): Promise<void> {
-  try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS experiences (
-        id INTEGER PRIMARY KEY,
-        professional_id INTEGER,
-        company VARCHAR(255) NOT NULL,
-        position VARCHAR(255) NOT NULL,
-        duration VARCHAR(100),
-        start_date DATE,
-        end_date DATE,
-        description TEXT,
-        achievements TEXT[],
-        technologies TEXT[],
-        skills_developed TEXT[],
-        impact TEXT,
-        keywords TEXT[],
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `)
-
-    console.log("Experiences table ensured")
-  } catch (error) {
-    console.error("Error ensuring experiences table:", error)
-    throw error
-  }
+  return ensureTable('experiences', `
+    CREATE TABLE IF NOT EXISTS experiences (
+      id INTEGER PRIMARY KEY,
+      professional_id INTEGER,
+      company VARCHAR(255) NOT NULL,
+      position VARCHAR(255) NOT NULL,
+      duration VARCHAR(100),
+      start_date DATE,
+      end_date DATE,
+      description TEXT,
+      achievements TEXT[],
+      technologies TEXT[],
+      skills_developed TEXT[],
+      impact TEXT,
+      keywords TEXT[],
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `)
 }
 
 // Get all experiences

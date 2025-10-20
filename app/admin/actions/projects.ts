@@ -1,6 +1,7 @@
 "use server"
 
 import { query, transaction } from "@/lib/database"
+import { ensureTable } from "@/lib/table-init"
 import { revalidatePath } from "next/cache"
 
 // Database row interface for projects table
@@ -36,30 +37,22 @@ export interface Project {
 
 // Ensure projects table exists (already defined in schema, but ensure it's there)
 async function ensureProjectsTable(): Promise<void> {
-  try {
-    // The table already exists with the current schema, just ensure it's there
-    await query(`
-      CREATE TABLE IF NOT EXISTS projects (
-        id INTEGER PRIMARY KEY,
-        professional_id INTEGER,
-        name VARCHAR(255),
-        description TEXT,
-        technologies TEXT[],
-        role VARCHAR(255),
-        outcomes TEXT[],
-        challenges TEXT[],
-        demo_url VARCHAR(500),
-        repository_url VARCHAR(500),
-        documentation_url VARCHAR(500),
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `)
-
-    console.log("Projects table ensured")
-  } catch (error) {
-    console.error("Error ensuring projects table:", error)
-    throw error
-  }
+  return ensureTable('projects', `
+    CREATE TABLE IF NOT EXISTS projects (
+      id INTEGER PRIMARY KEY,
+      professional_id INTEGER,
+      name VARCHAR(255),
+      description TEXT,
+      technologies TEXT[],
+      role VARCHAR(255),
+      outcomes TEXT[],
+      challenges TEXT[],
+      demo_url VARCHAR(500),
+      repository_url VARCHAR(500),
+      documentation_url VARCHAR(500),
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `)
 }
 
 // Get all projects

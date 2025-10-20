@@ -21,6 +21,11 @@ function initializePool(): Pool {
 
 // Get or create the database pool
 export function getPool(): Pool {
+  // During build phase, don't create pool if DATABASE_URL is missing
+  if (!process.env.DATABASE_URL) {
+    console.warn('DATABASE_URL not set - database operations will fail')
+  }
+  
   if (!pool) {
     pool = initializePool()
     

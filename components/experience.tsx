@@ -2,13 +2,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar } from "lucide-react"
 import { getExperiences, initializeDefaultExperiences } from "@/app/admin/actions/experience"
+import { safeDbOperation } from "@/lib/safe-db-operation"
 
 export async function Experience() {
-  // Initialize default data if needed
-  await initializeDefaultExperiences()
+  // Initialize default data if needed (with error handling)
+  await safeDbOperation(
+    () => initializeDefaultExperiences(),
+    undefined,
+    'initializeDefaultExperiences'
+  )
   
-  // Get experiences from database
-  const experiences = await getExperiences()
+  // Get experiences from database (with fallback to empty array)
+  const experiences = await safeDbOperation(
+    () => getExperiences(),
+    [],
+    'getExperiences'
+  )
 
   return (
     <section id="experience" className="py-20 relative overflow-hidden">

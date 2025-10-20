@@ -1,6 +1,6 @@
 "use server"
 
-import { auth } from "@clerk/nextjs/server"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 
 export async function checkAdminAuth() {
@@ -8,6 +8,16 @@ export async function checkAdminAuth() {
   
   if (!userId) {
     redirect("/admin/sign-in")
+  }
+  
+  // Verify admin role from publicMetadata
+  const user = await currentUser()
+  const role = user?.publicMetadata?.role as string | undefined
+  
+  if (role !== 'admin') {
+    // User is authenticated but not an admin
+    // Redirect to unauthorized page or home
+    redirect("/")
   }
   
   return userId

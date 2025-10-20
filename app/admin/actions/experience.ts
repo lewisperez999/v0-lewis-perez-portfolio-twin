@@ -61,40 +61,51 @@ async function ensureExperiencesTable(): Promise<void> {
   `)
 }
 
-// Get all experiences
+// Get all experiences with caching
 export async function getExperiences(): Promise<Experience[]> {
-  try {
-    await ensureExperiencesTable()
+  // Use unstable_cache for Next.js data cache integration
+  const { unstable_cache } = await import('next/cache');
+  
+  const getCachedExperiences = unstable_cache(
+    async () => {
+      try {
+        await ensureExperiencesTable()
 
-    const rows = await query<ExperienceRow>(`
-      SELECT 
-        id, professional_id, company, position, start_date, end_date, duration, description,
-        achievements, technologies, skills_developed, impact, keywords, created_at
-      FROM experiences 
-      ORDER BY start_date DESC
-    `)
+        const rows = await query<ExperienceRow>(`
+          SELECT 
+            id, professional_id, company, position, start_date, end_date, duration, description,
+            achievements, technologies, skills_developed, impact, keywords, created_at
+          FROM experiences 
+          ORDER BY start_date DESC
+        `)
 
-    return rows.map(row => ({
-      id: String(row.id),
-      professional_id: row.professional_id || 1,
-      company: row.company,
-      position: row.position,
-      start_date: row.start_date ? (typeof row.start_date === 'string' ? row.start_date : row.start_date.toISOString().split('T')[0]) : null,
-      end_date: row.end_date ? (typeof row.end_date === 'string' ? row.end_date : row.end_date.toISOString().split('T')[0]) : null,
-      duration: row.duration,
-      description: row.description,
-      achievements: Array.isArray(row.achievements) ? row.achievements : [],
-      technologies: Array.isArray(row.technologies) ? row.technologies : [],
-      skills_developed: Array.isArray(row.skills_developed) ? row.skills_developed : [],
-      impact: row.impact || '',
-      keywords: Array.isArray(row.keywords) ? row.keywords : [],
-      created_at: new Date(row.created_at)
-    }))
+        return rows.map(row => ({
+          id: String(row.id),
+          professional_id: row.professional_id || 1,
+          company: row.company,
+          position: row.position,
+          start_date: row.start_date ? (typeof row.start_date === 'string' ? row.start_date : row.start_date.toISOString().split('T')[0]) : null,
+          end_date: row.end_date ? (typeof row.end_date === 'string' ? row.end_date : row.end_date.toISOString().split('T')[0]) : null,
+          duration: row.duration,
+          description: row.description,
+          achievements: Array.isArray(row.achievements) ? row.achievements : [],
+          technologies: Array.isArray(row.technologies) ? row.technologies : [],
+          skills_developed: Array.isArray(row.skills_developed) ? row.skills_developed : [],
+          impact: row.impact || '',
+          keywords: Array.isArray(row.keywords) ? row.keywords : [],
+          created_at: new Date(row.created_at)
+        }))
 
-  } catch (error) {
-    console.error("Error getting experiences:", error)
-    throw new Error("Failed to get experiences")
-  }
+      } catch (error) {
+        console.error("Error getting experiences:", error)
+        throw new Error("Failed to get experiences")
+      }
+    },
+    ['experiences'],
+    { revalidate: 3600, tags: ['experiences'] }
+  );
+  
+  return getCachedExperiences();
 }
 
 // Get single experience by ID

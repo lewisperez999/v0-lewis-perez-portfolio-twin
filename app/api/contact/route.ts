@@ -134,6 +134,11 @@ Sent at: ${new Date().toLocaleString()}
 export async function GET() {
   return NextResponse.json(
     { message: 'Method not allowed' },
-    { status: 405 }
-  )
+    { 
+      status: 405,
+      headers: {
+        'Cache-Control': 'public, max-age=3600',
+      },
+    }
+  );
 }

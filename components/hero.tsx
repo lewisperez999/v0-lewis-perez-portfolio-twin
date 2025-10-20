@@ -101,6 +101,7 @@ export function Hero() {
                   fill
                   className="object-cover transition-transform duration-500 hover:scale-105"
                   priority
+                  quality={90}
                 />
                 <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
               </div>

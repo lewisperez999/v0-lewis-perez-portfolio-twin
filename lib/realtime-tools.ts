@@ -182,17 +182,36 @@ export const toolHandlers = {
   search_professional_content: async (args: { query: string }) => {
     try {
       const results = await searchProfessionalContent(args.query);
+      
+      if (!results.results || results.results.length === 0) {
+        return {
+          success: true,
+          message: `No results found for query: "${args.query}". Try rephrasing or using different keywords.`,
+          totalResults: 0
+        };
+      }
+      
+      // Format results in a clear, readable way for OpenAI to use
+      const formattedResults = results.results.map((r, index) => {
+        const type = r.metadata?.chunk_type || 'general';
+        const relevance = Math.round(r.score * 100);
+        return `[${type.toUpperCase()} - ${relevance}% relevant]\n${r.content}`;
+      }).join('\n\n---\n\n');
+      
       return {
         success: true,
-        results: results.results.map(r => ({
-          content: r.content,
-          relevance: r.score,
-          type: r.metadata?.chunk_type || 'general'
-        })),
+        message: `Found ${results.totalResults} relevant results for "${args.query}":`,
+        content: formattedResults,
+        summary: `Retrieved ${results.totalResults} professional content items about ${args.query}. Use this information to answer the user's question in first person as Lewis Perez.`,
         totalResults: results.totalResults
       };
     } catch (error) {
-      return { success: false, error: 'Failed to search content' };
+      console.error('search_professional_content error:', error);
+      return { 
+        success: false, 
+        error: 'Failed to search content',
+        message: 'An error occurred while searching. Please try again.' 
+      };
     }
   },
 

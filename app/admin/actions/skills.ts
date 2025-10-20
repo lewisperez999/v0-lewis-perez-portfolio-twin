@@ -49,35 +49,46 @@ async function ensureSkillsTable(): Promise<void> {
   `)
 }
 
-// Get all skills
+// Get all skills with caching
 export async function getSkills(): Promise<Skill[]> {
-  try {
-    await ensureSkillsTable()
+  // Use unstable_cache for Next.js data cache integration
+  const { unstable_cache } = await import('next/cache');
+  
+  const getCachedSkills = unstable_cache(
+    async () => {
+      try {
+        await ensureSkillsTable()
 
-    const rows = await query<SkillRow>(`
-      SELECT 
-        id, professional_id, category, skill_name, proficiency, experience_years, context, projects, skill_type, created_at
-      FROM skills 
-      ORDER BY category, skill_name
-    `)
+        const rows = await query<SkillRow>(`
+          SELECT 
+            id, professional_id, category, skill_name, proficiency, experience_years, context, projects, skill_type, created_at
+          FROM skills 
+          ORDER BY category, skill_name
+        `)
 
-    return rows.map(row => ({
-      id: String(row.id),
-      professional_id: row.professional_id,
-      category: row.category,
-      skill_name: row.skill_name,
-      proficiency: row.proficiency,
-      experience_years: row.experience_years,
-      context: row.context,
-      projects: Array.isArray(row.projects) ? row.projects : [],
-      skill_type: row.skill_type,
-      created_at: new Date(row.created_at)
-    }))
+        return rows.map(row => ({
+          id: String(row.id),
+          professional_id: row.professional_id,
+          category: row.category,
+          skill_name: row.skill_name,
+          proficiency: row.proficiency,
+          experience_years: row.experience_years,
+          context: row.context,
+          projects: Array.isArray(row.projects) ? row.projects : [],
+          skill_type: row.skill_type,
+          created_at: new Date(row.created_at)
+        }))
 
-  } catch (error) {
-    console.error("Error getting skills:", error)
-    throw new Error("Failed to get skills")
-  }
+      } catch (error) {
+        console.error("Error getting skills:", error)
+        throw new Error("Failed to get skills")
+      }
+    },
+    ['skills'],
+    { revalidate: 3600, tags: ['skills'] }
+  );
+  
+  return getCachedSkills();
 }
 
 // Get skills by category

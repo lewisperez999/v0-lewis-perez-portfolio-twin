@@ -55,38 +55,49 @@ async function ensureProjectsTable(): Promise<void> {
   `)
 }
 
-// Get all projects
+// Get all projects with caching
 export async function getProjects(): Promise<Project[]> {
-  try {
-    await ensureProjectsTable()
+  // Use unstable_cache for Next.js data cache integration
+  const { unstable_cache } = await import('next/cache');
+  
+  const getCachedProjects = unstable_cache(
+    async () => {
+      try {
+        await ensureProjectsTable()
 
-    const rows = await query<ProjectRow>(`
-      SELECT 
-        id, professional_id, name, description, technologies, role, outcomes, challenges,
-        demo_url, repository_url, documentation_url, created_at
-      FROM projects 
-      ORDER BY created_at DESC
-    `)
+        const rows = await query<ProjectRow>(`
+          SELECT 
+            id, professional_id, name, description, technologies, role, outcomes, challenges,
+            demo_url, repository_url, documentation_url, created_at
+          FROM projects 
+          ORDER BY created_at DESC
+        `)
 
-    return rows.map(row => ({
-      id: String(row.id),
-      professional_id: row.professional_id,
-      name: row.name,
-      description: row.description,
-      technologies: Array.isArray(row.technologies) ? row.technologies : [],
-      role: row.role,
-      outcomes: Array.isArray(row.outcomes) ? row.outcomes : [],
-      challenges: Array.isArray(row.challenges) ? row.challenges : [],
-      demo_url: row.demo_url,
-      repository_url: row.repository_url,
-      documentation_url: row.documentation_url,
-      created_at: new Date(row.created_at)
-    }))
+        return rows.map(row => ({
+          id: String(row.id),
+          professional_id: row.professional_id,
+          name: row.name,
+          description: row.description,
+          technologies: Array.isArray(row.technologies) ? row.technologies : [],
+          role: row.role,
+          outcomes: Array.isArray(row.outcomes) ? row.outcomes : [],
+          challenges: Array.isArray(row.challenges) ? row.challenges : [],
+          demo_url: row.demo_url,
+          repository_url: row.repository_url,
+          documentation_url: row.documentation_url,
+          created_at: new Date(row.created_at)
+        }))
 
-  } catch (error) {
-    console.error("Error getting projects:", error)
-    throw new Error("Failed to get projects")
-  }
+      } catch (error) {
+        console.error("Error getting projects:", error)
+        throw new Error("Failed to get projects")
+      }
+    },
+    ['projects'],
+    { revalidate: 3600, tags: ['projects'] }
+  );
+  
+  return getCachedProjects();
 }
 
 // Get featured projects (we'll use all projects since there's no featured column)

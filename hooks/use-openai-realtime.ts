@@ -84,16 +84,40 @@ export default function useOpenAIRealtime(
     const greeting = userName ? `Hi ${userName}!` : "Hi!";
     
     // Get current date/time in Australia/Sydney timezone
-    const sydneyTime = new Date().toLocaleString("en-AU", { timeZone: "Australia/Sydney" });
-    const now = new Date(sydneyTime);
-    const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
+    // Use proper date handling to avoid invalid date errors
+    const now = new Date();
+    
+    // Format dates properly using UTC methods to avoid timezone parsing issues
+    const sydneyFormatter = new Intl.DateTimeFormat('en-AU', {
+      timeZone: 'Australia/Sydney',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    const sydneyParts = sydneyFormatter.formatToParts(now);
+    const year = sydneyParts.find(p => p.type === 'year')?.value || '';
+    const month = sydneyParts.find(p => p.type === 'month')?.value || '';
+    const day = sydneyParts.find(p => p.type === 'day')?.value || '';
+    const hour = sydneyParts.find(p => p.type === 'hour')?.value || '';
+    const minute = sydneyParts.find(p => p.type === 'minute')?.value || '';
+    const second = sydneyParts.find(p => p.type === 'second')?.value || '';
+    
+    const currentDate = `${year}-${month}-${day}`; // YYYY-MM-DD
+    const currentTime = `${hour}:${minute}:${second}`; // HH:MM:SS
     const userTimezone = "Australia/Sydney (Melbourne uses same timezone)";
     
-    // Calculate tomorrow's date
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowDate = tomorrow.toISOString().split('T')[0];
+    // Calculate tomorrow's date (add 1 day to current time)
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const tomorrowParts = sydneyFormatter.formatToParts(tomorrow);
+    const tomorrowYear = tomorrowParts.find(p => p.type === 'year')?.value || '';
+    const tomorrowMonth = tomorrowParts.find(p => p.type === 'month')?.value || '';
+    const tomorrowDay = tomorrowParts.find(p => p.type === 'day')?.value || '';
+    const tomorrowDate = `${tomorrowYear}-${tomorrowMonth}-${tomorrowDay}`;
     
     // Build instructions with personalized greeting AND time conversion guidance
     const instructions = `You ARE Lewis Perez, speaking directly to ${userName ? userName : "the user"}.
@@ -352,6 +376,8 @@ ${userName ? `Remember to use ${userName}'s name naturally in conversation.` : "
          * AI calls a function (tool)
          */
         case "response.function_call_arguments.done": {
+          console.log("🔧 Tool called:", msg.name, "with args:", msg.arguments);
+          
           // Handle both custom registered functions and realtime tools
           const fn = functionRegistry.current[msg.name];
           const realtimeTool = toolHandlers[msg.name as keyof typeof toolHandlers];
@@ -363,9 +389,12 @@ ${userName ? `Remember to use ${userName}'s name naturally in conversation.` : "
               
               if (realtimeTool) {
                 // Use realtime tool handler
+                console.log("🔧 Executing realtime tool:", msg.name);
                 result = await realtimeTool(args);
+                console.log("✅ Tool result:", JSON.stringify(result).substring(0, 200));
               } else {
                 // Use custom registered function
+                console.log("🔧 Executing custom function:", msg.name);
                 result = await fn(args);
               }
 
@@ -379,16 +408,18 @@ ${userName ? `Remember to use ${userName}'s name naturally in conversation.` : "
                 },
               };
               dataChannelRef.current?.send(JSON.stringify(response));
+              console.log("📤 Sent tool output back to OpenAI");
 
               // Request a new response that will use the tool results
               const responseCreate = {
                 type: "response.create",
                 response: {
                   modalities: ["text", "audio"],
-                  instructions: "Use the tool results you just received to answer the user's question. Speak naturally in first person as Lewis Perez."
+                  instructions: `IMPORTANT: You just received search results with detailed information. The "content" field contains ALL the information you need. Read it carefully and use specific details from it to answer comprehensively. Speak naturally in first person as Lewis Perez using the exact details provided (project names, technologies, metrics, companies, etc.). DO NOT say you lack information - you have it in the content field!`
                 }
               };
               dataChannelRef.current?.send(JSON.stringify(responseCreate));
+              console.log("📤 Requested new response with tool results");
             } catch (error) {
               console.error("Tool execution error:", error);
               
@@ -406,6 +437,8 @@ ${userName ? `Remember to use ${userName}'s name naturally in conversation.` : "
               };
               dataChannelRef.current?.send(JSON.stringify(errorResponse));
             }
+          } else {
+            console.warn("⚠️ No handler found for tool:", msg.name);
           }
           break;
         }

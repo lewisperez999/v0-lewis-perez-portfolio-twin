@@ -119,33 +119,45 @@ export default async function Home() {
 
 **Reference:** [Next.js ISR Guide](https://nextjs.org/docs/app/guides/incremental-static-regeneration)
 
-#### Step 3: Implement Redis Caching Layer
+#### Step 3: Implement Upstash Redis Caching Layer (Vercel Integration)
 ```typescript
 // lib/cache.ts
 import { Redis } from '@upstash/redis';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
+// Vercel automatically provides these environment variables
+const redis = Redis.fromEnv();
 
 export async function getCachedData<T>(
   key: string,
   fetcher: () => Promise<T>,
   ttl: number = 3600
 ): Promise<T> {
-  // Check cache first
-  const cached = await redis.get<T>(key);
-  if (cached) return cached;
+  try {
+    // Check cache first
+    const cached = await redis.get<T>(key);
+    if (cached !== null) return cached;
 
-  // Fetch and cache
-  const data = await fetcher();
-  await redis.setex(key, ttl, data);
-  return data;
+    // Fetch and cache
+    const data = await fetcher();
+    await redis.setex(key, ttl, data);
+    return data;
+  } catch (error) {
+    console.error('Cache error:', error);
+    // Fallback to fetcher if cache fails
+    return fetcher();
+  }
+}
+
+// Invalidate cache by pattern
+export async function invalidateCache(pattern: string) {
+  const keys = await redis.keys(pattern);
+  if (keys.length > 0) {
+    await redis.del(...keys);
+  }
 }
 ```
 
-**Reference:** [Vercel Cache Handler](https://nextjs.org/docs/app/api-reference/config/next-config-js/incrementalCacheHandlerPath)
+**Reference:** [Upstash Redis SDK](https://upstash.com/docs/redis/sdks/ts/overview) | [Vercel Storage](https://vercel.com/docs/storage/vercel-kv)
 
 #### Step 4: Optimize Database Queries
 ```typescript
@@ -506,19 +518,49 @@ CREATE INDEX idx_content_chunks_search
 ON content_chunks USING GIN(to_tsvector('english', content));
 ```
 
-#### Step 2: Optimize Vector Search
-```sql
--- Optimize vector index for similarity search
-CREATE INDEX idx_embeddings_vector_ivfflat 
-ON embeddings 
-USING ivfflat (embedding vector_cosine_ops) 
-WITH (lists = 100);
+#### Step 2: Optimize Vector Search with Upstash Vector
+```typescript
+// lib/vector-search.ts
+import { Index } from '@upstash/vector';
 
--- Analyze table for query planner
-ANALYZE embeddings;
+// Initialize Upstash Vector (Vercel automatically provides credentials)
+const index = new Index({
+  url: process.env.UPSTASH_VECTOR_REST_URL!,
+  token: process.env.UPSTASH_VECTOR_REST_TOKEN!,
+});
+
+// Optimized vector search with caching
+export async function searchSimilarContent(
+  query: string,
+  embedding: number[],
+  topK: number = 5
+) {
+  const cacheKey = `vector:search:${query.slice(0, 50)}`;
+  
+  return getCachedData(
+    cacheKey,
+    async () => {
+      const results = await index.query({
+        vector: embedding,
+        topK,
+        includeMetadata: true,
+      });
+      return results;
+    },
+    1800 // 30 minute cache
+  );
+}
+
+// Batch upsert for better performance
+export async function batchUpsertVectors(
+  vectors: Array<{ id: string; vector: number[]; metadata: any }>
+) {
+  // Upstash Vector supports efficient batch operations
+  return index.upsert(vectors);
+}
 ```
 
-**Reference:** [PostgreSQL Indexing](https://www.postgresql.org/docs/current/indexes.html)
+**Reference:** [Upstash Vector Documentation](https://upstash.com/docs/vector/overall/getstarted) | [Vercel Vector Storage](https://vercel.com/docs/storage/vercel-vector)
 
 **Expected Impact:** Query execution time reduction by 60% (+3 points on RES)
 
@@ -843,7 +885,50 @@ self.addEventListener('fetch', (event) => {
 
 ## 🔧 Priority 6: Technical Improvements (Week 5)
 
-### 6.1 Next.js Configuration Updates
+### 6.1 Environment Configuration for Upstash (Vercel)
+
+**Implementation Steps:**
+
+#### Step 1: Configure Upstash Environment Variables
+```bash
+# .env.local (Vercel automatically populates these)
+UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-token
+UPSTASH_VECTOR_REST_URL=https://your-vector.upstash.io
+UPSTASH_VECTOR_REST_TOKEN=your-vector-token
+```
+
+**Reference:** [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) | [Upstash Integration](https://vercel.com/integrations/upstash)
+
+#### Step 2: Initialize Upstash Services
+```typescript
+// lib/upstash.ts
+import { Redis } from '@upstash/redis';
+import { Index } from '@upstash/vector';
+
+// Redis for caching - uses Vercel KV under the hood
+export const redis = Redis.fromEnv();
+
+// Vector for semantic search
+export const vectorIndex = new Index({
+  url: process.env.UPSTASH_VECTOR_REST_URL!,
+  token: process.env.UPSTASH_VECTOR_REST_TOKEN!,
+});
+
+// Health check
+export async function checkUpstashHealth() {
+  try {
+    await redis.ping();
+    const info = await vectorIndex.info();
+    return { redis: 'healthy', vector: 'healthy', vectorInfo: info };
+  } catch (error) {
+    console.error('Upstash health check failed:', error);
+    throw error;
+  }
+}
+```
+
+### 6.2 Next.js Configuration Updates
 
 **Implementation Steps:**
 
@@ -937,7 +1022,7 @@ export default nextConfig;
 
 ---
 
-### 6.2 Bundle Analysis
+### 6.3 Bundle Analysis
 
 **Implementation Steps:**
 
@@ -1151,7 +1236,28 @@ const nextConfig = {
 ```
 **Impact:** +1 point on RES
 
-**Total Quick Wins Impact:** +5 points on RES (Est. 30-45 minutes)
+### Quick Win #6: Enable Upstash Redis Edge Caching (20 minutes)
+```typescript
+// app/api/experiences/route.ts
+import { redis } from '@/lib/upstash';
+
+export async function GET() {
+  const cached = await redis.get('experiences:all');
+  if (cached) return Response.json(cached);
+  
+  const data = await getExperiences();
+  await redis.setex('experiences:all', 3600, data);
+  
+  return Response.json(data, {
+    headers: { 'Cache-Control': 'public, s-maxage=3600' },
+  });
+}
+
+export const runtime = 'edge';
+```
+**Impact:** +2 points on RES
+
+**Total Quick Wins Impact:** +7 points on RES (Est. 45-60 minutes)
 
 ---
 
@@ -1242,6 +1348,8 @@ const nextConfig = {
 - **Vercel Analytics:** Built-in
 - **Vercel Speed Insights:** Built-in
 - **Web Vitals Library:** [@vercel/analytics](https://www.npmjs.com/package/@vercel/analytics)
+- **Upstash Redis Console:** [console.upstash.com](https://console.upstash.com)
+- **Upstash Vector Console:** [console.upstash.com/vector](https://console.upstash.com/vector)
 
 ### Development Tools
 - **Next.js Bundle Analyzer:** [@next/bundle-analyzer](https://www.npmjs.com/package/@next/bundle-analyzer)
@@ -1266,6 +1374,12 @@ const nextConfig = {
 8. **React Performance:** https://react.dev/learn/render-and-commit
 9. **Web Performance MDN:** https://developer.mozilla.org/en-US/docs/Web/Performance
 10. **Google Performance Tips:** https://developers.google.com/speed
+
+### Vercel & Upstash Integration
+11. **Upstash Redis Documentation:** https://upstash.com/docs/redis
+12. **Upstash Vector Documentation:** https://upstash.com/docs/vector
+13. **Vercel KV (Upstash Redis):** https://vercel.com/docs/storage/vercel-kv
+14. **Vercel Vector (Upstash Vector):** https://vercel.com/docs/storage/vercel-vector
 
 ---
 

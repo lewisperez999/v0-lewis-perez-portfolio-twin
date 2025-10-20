@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import dynamic from "next/dynamic"
 import { Header } from "@/components/header"
 import { Hero } from "@/components/hero"
 import { About } from "@/components/about"
@@ -13,6 +14,9 @@ import {
   ProjectsSkeleton, 
   SkillsSkeleton 
 } from "@/components/ui/section-skeletons"
+
+// Enable ISR (Incremental Static Regeneration) - revalidate every hour
+export const revalidate = 3600;
 
 export default function Home() {
   return (

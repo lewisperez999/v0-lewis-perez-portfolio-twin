@@ -63,9 +63,31 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Then handle Clerk authentication for admin routes
+  // Protect admin routes and verify admin role
   if (isAdminRoute(req) && !isPublicRoute(req)) {
-    await auth.protect()
+    await auth.protect((has) => {
+      // Check if user has admin role in publicMetadata
+      // The role is stored in publicMetadata.role
+      return has({ role: 'admin' })
+    })
   }
+
+  // Add performance headers for API routes
+  const response = NextResponse.next();
+  
+  // Add pathname to headers so server components can access it
+  response.headers.set('x-pathname', req.nextUrl.pathname);
+  
+  if (req.nextUrl.pathname.startsWith('/api')) {
+    // Enable compression for API responses
+    response.headers.set('Content-Encoding', 'gzip');
+    // Add cache headers for public API routes (non-admin)
+    if (!req.nextUrl.pathname.startsWith('/api/admin')) {
+      response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    }
+  }
+  
+  return response;
 })
 
 export const config = {

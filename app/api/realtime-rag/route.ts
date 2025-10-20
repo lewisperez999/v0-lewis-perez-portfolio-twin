@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAIChatContext } from "@/lib/vector-search";
+import { getCachedData } from "@/lib/upstash";
+
+// Quick Win #4: Enable ISR (cannot use edge runtime due to pg dependency)
+export const revalidate = 3600; // Revalidate every hour
 
 /**
  * Fast RAG endpoint optimized for OpenAI Realtime API
@@ -29,20 +33,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Perform RAG search with optimized parameters for voice
-    const ragResult = await getAIChatContext(trimmedQuery);
+    // Quick Win #6: Use Redis cache for frequently searched queries
+    const cacheKey = `rag:${trimmedQuery.toLowerCase().slice(0, 100)}`;
+    const ragResult = await getCachedData(
+      cacheKey,
+      () => getAIChatContext(trimmedQuery),
+      1800 // Cache for 30 minutes
+    );
 
     // Return compact context optimized for voice responses
-    return NextResponse.json({
-      context: ragResult.context,
-      sources: ragResult.sources.slice(0, 3).map(s => ({
-        id: s.id,
-        type: s.metadata?.chunk_type,
-        score: s.score,
-      })),
-      relevanceScore: ragResult.relevanceScore,
-      cached: false,
-    });
+    return NextResponse.json(
+      {
+        context: ragResult.context,
+        sources: ragResult.sources.slice(0, 3).map(s => ({
+          id: s.id,
+          type: s.metadata?.chunk_type,
+          score: s.score,
+        })),
+        relevanceScore: ragResult.relevanceScore,
+        cached: true,
+      },
+      {
+        // Quick Win #4: Add Cache-Control headers
+        headers: {
+          'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600',
+          'CDN-Cache-Control': 'public, s-maxage=1800',
+        },
+      }
+    );
 
   } catch (error) {
     console.error("Realtime RAG API error:", error);

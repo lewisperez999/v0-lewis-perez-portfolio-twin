@@ -357,4 +357,79 @@
     box-shadow: var(--glow-hover);
     transition: box-shadow 0.3s ease;
   }
+
+  /* Week 2 Priority 4.2: GPU-Accelerated Animations for 60fps performance */
+  .animate-element {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Use transform instead of position changes for better performance */
+  @keyframes slideIn {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .slide-in {
+    animation: slideIn 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+
+  .slide-up {
+    animation: slideUp 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+
+  /* Respect user preferences for reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Week 2 Priority 5.1: Mobile-First Optimizations */
+  /* Larger touch targets for mobile */
+  @media (max-width: 768px) {
+    button,
+    a,
+    input[type="button"],
+    input[type="submit"],
+    [role="button"] {
+      min-height: 44px; /* Apple's recommended minimum touch target size */
+      min-width: 44px;
+    }
+
+    /* Optimize for thumb zone - bottom 1/3 of screen */
+    .mobile-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  }
+
+  /* Remove tap highlight on touch devices */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
 }

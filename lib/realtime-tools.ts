@@ -8,13 +8,13 @@ export const realtimeTools = [
   {
     type: "function",
     name: "search_professional_content",
-    description: "Search Lewis's professional content including experience, skills, and projects",
+    description: "CRITICAL: Use this tool for ANY question about Lewis's background. Searches ALL professional content including: work experience at companies (ING, Amdocs, IBM), technical skills (React, Next.js, Java, Spring Boot, AWS, PostgreSQL), portfolio projects (e-commerce, Shopify, web applications), achievements, and education. This tool has access to the complete professional database with specific details, metrics, and examples. ALWAYS call this tool before answering professional questions - do not guess or say you lack information.",
     parameters: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "The search query to find relevant professional information"
+          description: "The search query - use the user's exact question or key terms like 'projects', 'React experience', 'work at ING', 'e-commerce', 'skills'"
         }
       },
       required: ["query"]

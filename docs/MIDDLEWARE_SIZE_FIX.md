@@ -1,26 +1,33 @@
-# Middleware Bundle Size Fix
+# Middleware Bundle Size Fix ✅
 
 ## Problem
 The middleware was exceeding Vercel's Edge Function size limit (1 MB) because it was importing both Clerk and Arcjet packages, resulting in a 1.03 MB bundle.
 
-## Solution
-Moved Arcjet protection from middleware to a separate utility file (`lib/arcjet.ts`) that can be imported only in API routes that need it.
+## Solution ✅ IMPLEMENTED
+Moved Arcjet protection from middleware to a separate utility file (`lib/arcjet.ts`) and applied it to critical API routes.
 
 ### Changes Made
 
-1. **Simplified Middleware** (`middleware.ts`)
+1. **Simplified Middleware** (`middleware.ts`) ✅
    - Removed Arcjet imports and logic
    - Kept only Clerk authentication for admin routes
    - Added `runtime = 'edge'` export for explicit edge runtime
    - Reduced bundle size significantly
 
-2. **Created Arcjet Utility** (`lib/arcjet.ts`)
+2. **Created Arcjet Utility** (`lib/arcjet.ts`) ✅
    - Moved all Arcjet configuration to a reusable utility
    - Added helper function `checkArcjetProtection()`
    - Made Arcjet optional (gracefully handles missing API key)
+   - Properly typed with `ArcjetDecision` for TypeScript
 
-3. **Updated Vercel Config** (`vercel.json`)
+3. **Updated Vercel Config** (`vercel.json`) ✅
    - Added Node.js memory optimization for builds
+
+4. **Implemented Protection on Priority Routes** ✅
+   - `/api/contact` - Contact form spam protection
+   - `/api/admin/roles` - Admin role management security
+   - `/api/google-meet` - OAuth callback protection
+   - `/api/mcp` - MCP server endpoint protection
 
 ## How to Use Arcjet in API Routes
 
@@ -71,15 +78,22 @@ export async function POST(req: Request) {
 - Need to manually add protection to each API route
 - Consider adding to high-traffic or sensitive routes first
 
-## Priority Routes for Arcjet Protection
+## Priority Routes for Arcjet Protection ✅ IMPLEMENTED
 
-Add Arcjet protection to these routes in priority order:
+Arcjet protection has been added to these routes:
 
-1. `/api/contact` - Contact form (prone to spam)
-2. `/api/admin/**` - Admin endpoints (security critical)
-3. `/api/google-meet/**` - OAuth callbacks
-4. `/api/mcp/**` - MCP server endpoints
-5. Other public API endpoints as needed
+1. ✅ `/api/contact` - Contact form (rate limiting + bot detection)
+2. ✅ `/api/admin/roles` - Admin endpoints (security critical)
+3. ✅ `/api/google-meet` - OAuth callbacks and calendar operations
+4. ✅ `/api/mcp` - MCP server endpoints
+
+### Additional Routes to Consider
+
+If needed, you can add Arcjet protection to these routes in the future:
+- `/api/experiences/**` - Public experience data
+- `/api/projects/**` - Public project data
+- `/api/skills/**` - Public skills data
+- `/api/realtime-rag` - Realtime RAG endpoint
 
 ## Monitoring
 

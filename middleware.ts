@@ -38,5 +38,4 @@ export const config = {
   ],
 }
 
-// Specify edge runtime for optimal performance
-export const runtime = 'edge';
+export const runtime = 'experimental-edge';

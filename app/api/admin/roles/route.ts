@@ -1,5 +1,6 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { checkArcjetProtection } from '@/lib/arcjet'
 
 /**
  * API endpoint to manage user roles
@@ -10,6 +11,16 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check Arcjet protection (critical admin endpoint)
+    const decision = await checkArcjetProtection(request);
+    
+    if (decision.isDenied()) {
+      return NextResponse.json(
+        { error: decision.reason.isRateLimit() ? 'Too many requests' : 'Access denied' },
+        { status: decision.reason.isRateLimit() ? 429 : 403 }
+      );
+    }
+
     // Check if requester is authenticated and has admin role
     const { userId: requesterId } = await auth()
     
@@ -96,6 +107,16 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    // Check Arcjet protection (critical admin endpoint)
+    const decision = await checkArcjetProtection(request);
+    
+    if (decision.isDenied()) {
+      return NextResponse.json(
+        { error: decision.reason.isRateLimit() ? 'Too many requests' : 'Access denied' },
+        { status: decision.reason.isRateLimit() ? 429 : 403 }
+      );
+    }
+
     // Check if requester is authenticated and has admin role
     const { userId: requesterId } = await auth()
     

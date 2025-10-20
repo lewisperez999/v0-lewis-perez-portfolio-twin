@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { checkArcjetProtection } from '@/lib/arcjet';
 import {
   createGoogleMeet,
   getCalendarAvailability,
@@ -18,6 +19,22 @@ import { hasGoogleOAuthConnected } from '@/app/actions/google-oauth';
 // GET handler - Query calendar information
 export async function GET(request: NextRequest) {
   try {
+    // Check Arcjet protection first
+    const decision = await checkArcjetProtection(request);
+    
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimit()) {
+        return NextResponse.json(
+          { success: false, error: 'Too many requests' },
+          { status: 429 }
+        );
+      }
+      return NextResponse.json(
+        { success: false, error: 'Request blocked' },
+        { status: 403 }
+      );
+    }
+
     // Check authentication
     const { userId } = await auth();
     if (!userId) {
@@ -135,6 +152,22 @@ export async function GET(request: NextRequest) {
 // POST handler - Create or modify calendar events
 export async function POST(request: NextRequest) {
   try {
+    // Check Arcjet protection first
+    const decision = await checkArcjetProtection(request);
+    
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimit()) {
+        return NextResponse.json(
+          { success: false, error: 'Too many requests' },
+          { status: 429 }
+        );
+      }
+      return NextResponse.json(
+        { success: false, error: 'Request blocked' },
+        { status: 403 }
+      );
+    }
+
     // Check authentication
     const { userId } = await auth();
     if (!userId) {

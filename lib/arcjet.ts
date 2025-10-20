@@ -1,4 +1,4 @@
-import arcjet, { detectBot, shield, tokenBucket } from "@arcjet/next";
+import arcjet, { detectBot, shield, tokenBucket, ArcjetDecision } from "@arcjet/next";
 
 // Configure Arcjet for API route protection (only if key is available)
 export const aj = process.env.ARCJET_KEY ? arcjet({
@@ -28,11 +28,23 @@ export const aj = process.env.ARCJET_KEY ? arcjet({
   ],
 }) : null;
 
+// Mock decision for when Arcjet is not configured
+const mockDecision = {
+  isDenied: () => false,
+  isAllowed: () => true,
+  isErrored: () => false,
+  reason: {
+    isRateLimit: () => false,
+    isBot: () => false,
+    isShield: () => false,
+  },
+} as unknown as ArcjetDecision;
+
 // Helper function to check Arcjet protection in API routes
-export async function checkArcjetProtection(req: Request) {
+export async function checkArcjetProtection(req: Request): Promise<ArcjetDecision> {
   if (!aj) {
-    // If Arcjet is not configured, allow the request
-    return { isDenied: () => false };
+    // If Arcjet is not configured, return mock decision that allows the request
+    return mockDecision;
   }
   
   const decision = await aj.protect(req, { requested: 1 });

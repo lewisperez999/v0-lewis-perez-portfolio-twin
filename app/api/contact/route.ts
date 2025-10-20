@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { z } from 'zod'
+import { checkArcjetProtection } from '@/lib/arcjet'
 
 // Validation schema for contact form
 const contactSchema = z.object({
@@ -20,6 +21,28 @@ function getResendClient() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check Arcjet protection (rate limiting, bot detection, security)
+    const decision = await checkArcjetProtection(request);
+    
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimit()) {
+        return NextResponse.json(
+          { success: false, error: 'Too many requests. Please try again later.' },
+          { status: 429 }
+        );
+      } else if (decision.reason.isBot()) {
+        return NextResponse.json(
+          { success: false, error: 'Bot access denied' },
+          { status: 403 }
+        );
+      } else {
+        return NextResponse.json(
+          { success: false, error: 'Request blocked for security reasons' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Parse request body
     const body = await request.json()
     

@@ -1,9 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToolsList, executeTool, mcpTools } from '@/lib/mcp-tools';
+import { checkArcjetProtection } from '@/lib/arcjet';
 
 // Handle MCP protocol requests - Main endpoint for mcp-remote
 export async function POST(request: NextRequest) {
   try {
+    // Check Arcjet protection
+    const decision = await checkArcjetProtection(request);
+    
+    if (decision.isDenied()) {
+      const errorResponse = {
+        jsonrpc: '2.0',
+        error: {
+          code: decision.reason.isRateLimit() ? 429 : 403,
+          message: decision.reason.isRateLimit() 
+            ? 'Rate limit exceeded' 
+            : 'Request blocked for security reasons',
+        },
+        id: null,
+      };
+      
+      return NextResponse.json(
+        errorResponse,
+        { 
+          status: decision.reason.isRateLimit() ? 429 : 403,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
+
     // Get the request body (MCP JSON-RPC format)
     const body = await request.json();
     const { jsonrpc, method, params: methodParams, id } = body;

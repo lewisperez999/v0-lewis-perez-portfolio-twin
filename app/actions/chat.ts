@@ -1,5 +1,6 @@
 "use server"
 import { z } from "zod"
+import { tool, stepCountIs } from "ai"
 import { getAIChatContext, searchVectors, type SearchResult } from "@/lib/vector-search"
 import { logConversation } from "@/app/admin/actions/conversation-logs"
 
@@ -57,10 +58,81 @@ interface AIResponseOptions {
   personaEnhancement?: string
   userName?: string
 }
+/**
+ * Create Vercel AI SDK tools from tool handlers
+ * LLM decides when to use these tools - no pre-fetching
+ */
+async function createAiSdkTools(): Promise<Record<string, any>> {
+  const { toolHandlers } = await import('@/lib/realtime-tools')
+  
+  // AI SDK v5 - tool definitions must use tool() helper
+  return {
+    search_professional_content: tool({
+      description: "CRITICAL: Use this tool for ANY question about Lewis's background. Searches ALL professional content including: work experience at companies (ING, Amdocs, IBM), technical skills (React, Next.js, Java, Spring Boot, AWS, PostgreSQL), portfolio projects (e-commerce, Shopify, web applications), achievements, and education.",
+      inputSchema: z.object({
+        query: z.string().describe("The search query - use the user's exact question or key terms")
+      }),
+      execute: async ({ query }) => {
+        return await toolHandlers.search_professional_content({ query })
+      }
+    }),
+    
+    get_detailed_experience: tool({
+      description: "Get detailed information about Lewis's work experience at specific companies",
+      inputSchema: z.object({
+        company: z.string().optional().describe("Optional company name to filter by")
+      }),
+      execute: async ({ company }) => {
+        return await toolHandlers.get_detailed_experience({ company })
+      }
+    }),
+    
+    get_technical_skills: tool({
+      description: "Get Lewis's technical skills organized by category with proficiency levels",
+      inputSchema: z.object({
+        category: z.string().optional().describe("Optional skill category to filter by")
+      }),
+      execute: async ({ category }) => {
+        return await toolHandlers.get_technical_skills({ category })
+      }
+    }),
+
+    get_conversation_context: tool({
+      description: "Get contextual information based on the conversation topic using RAG",
+      inputSchema: z.object({
+        topic: z.string().describe("The topic or question to get relevant context for")
+      }),
+      execute: async ({ topic }): Promise<any> => {
+        return await toolHandlers.get_conversation_context({ topic })
+      }
+    })
+  }
+}
 
 /**
- * Generate AI response with RAG context
- * Enhanced for MCP AI-to-AI conversations while maintaining backward compatibility
+ * Extract sources from tool results across all steps
+ */
+function extractSourcesFromToolResults(steps: any[]): SearchResult[] {
+  const sources: SearchResult[] = []
+  
+  for (const step of steps) {
+    for (const toolResult of step.toolResults || []) {
+      if (toolResult.toolName === 'search_professional_content' || 
+          toolResult.toolName === 'get_conversation_context') {
+        const result = toolResult.result as any
+        if (result.sources) {
+          sources.push(...result.sources)
+        }
+      }
+    }
+  }
+  
+  return sources
+}
+
+/**
+ * Generate AI response with tool calling
+ * LLM decides when to use tools - no pre-fetching
  */
 export async function generateAIResponse(
   userMessage: string, 
@@ -69,27 +141,22 @@ export async function generateAIResponse(
   options?: AIResponseOptions
 ) {
   const startTime = Date.now()
+  let context = ""
+  let sources: SearchResult[] = []
   
   try {
-    // Get relevant context from vector search (with fallback)
-    let context = ""
-    let sources: SearchResult[] = []
-    let relevanceScore = 0
-
-    try {
-      const contextResult = await getAIChatContext(userMessage)
-      context = contextResult.context
-      sources = contextResult.sources
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      relevanceScore = contextResult.relevanceScore
-    } catch (error) {
-      // Vector search failed, continuing without context
-      context =
-        "Senior Software Engineer with 8+ years experience. Currently Full Stack Developer freelancing with React/Next.js/Shopify. Strong enterprise background in Java/Spring Boot, AWS, and database optimization at companies like ING and Amdocs. Modern tech stack includes TypeScript, Node.js, PostgreSQL, and e-commerce development."
-    }
-
     if (!process.env.AI_GATEWAY_API_KEY) {
-      // No AI Gateway API key available, using mock response
+      // No AI Gateway API key - fallback to RAG-first approach
+      console.log('⚠️  No AI Gateway API key, using legacy RAG-first approach')
+      
+      try {
+        const contextResult = await getAIChatContext(userMessage)
+        context = contextResult.context
+        sources = contextResult.sources
+      } catch (error) {
+        context = "Senior Software Engineer with 8+ years experience. Currently Full Stack Developer freelancing with React/Next.js/Shopify. Strong enterprise background in Java/Spring Boot, AWS, and database optimization at companies like ING and Amdocs."
+      }
+      
       const mockResult = generateMockResponse(userMessage, context, sources)
       
       // Log the conversation with enhanced database logging
@@ -108,16 +175,57 @@ export async function generateAIResponse(
       return mockResult
     }
 
-    // Use Vercel AI Gateway with configurable model
-    let result
+    // Use Vercel AI SDK with tool calling
+    console.log('🤖 Using tool calling - LLM will decide when to search')
     try {
       const { generateText } = await import("ai")
+      
+      // Create AI SDK tools
+      const aiSdkTools = await createAiSdkTools()
+      
+      // Build messages WITHOUT pre-fetched context (let LLM decide when to search)
+      const messages = await buildMessages(
+        userMessage, 
+        conversationHistory, 
+        "", // No pre-fetched context - LLM uses tools when needed
+        options?.personaEnhancement, 
+        options?.userName
+      )
 
-      result = await generateText({
-        model: options?.model || getAIModel(), // Use provided model or default
-        messages: await buildMessages(userMessage, conversationHistory, context, options?.personaEnhancement, options?.userName),
+      const result = await generateText({
+        model: options?.model || getAIModel(),
+        messages: messages,
         temperature: 0.7,
+        tools: aiSdkTools,
+        stopWhen: stepCountIs(5) // Stop after max 5 steps - allows LLM to use tools then respond
       })
+
+      // Extract sources from tool results
+      const sources = extractSourcesFromToolResults((result as any).steps || [])
+      
+      // Count tool usage
+      const allSteps = (result as any).steps || []
+      const totalToolCalls = allSteps.reduce((acc: number, step: any) => acc + (step.toolCalls?.length || 0), 0)
+      const toolsUsedList = allSteps
+        .flatMap((step: any) => step.toolCalls || [])
+        .map((tc: any) => tc.toolName)
+      
+      // Build context summary from tool results for logging
+      const contextUsed = allSteps
+        .flatMap((step: any) => step.toolResults || [])
+        .map((tr: any) => `${tr.toolName}`)
+        .join(', ') || 'none'
+
+      // Log final summary
+      if (totalToolCalls > 0) {
+        console.log('📊 FINAL SUMMARY - Tools Used:', {
+          totalToolCalls,
+          uniqueTools: [...new Set(toolsUsedList)],
+          sourcesFound: sources.length
+        })
+      } else {
+        console.log('📊 FINAL SUMMARY - Direct Response (No Tools)')
+      }
 
       const response = {
         response: result.text,
@@ -130,21 +238,23 @@ export async function generateAIResponse(
         metadata: {
           model: options?.model || getAIModel(),
           responseFormat: options?.responseFormat || "detailed",
-          sessionId: sessionId
+          sessionId: sessionId,
+          toolCallsCount: totalToolCalls,
+          toolsUsed: toolsUsedList
         }
       }
 
-      // Log successful conversation with enhanced database logging
+      // Log successful conversation
       const responseTime = Date.now() - startTime
       await logConversation(
         userMessage, 
         result.text, 
         "answered", 
         responseTime,
-        sessionId, // Use provided session ID or undefined for backward compatibility
-        options?.model || getAIModel(), // modelUsed
-        sources, // vectorSources
-        context // contextUsed
+        sessionId,
+        options?.model || getAIModel(),
+        sources,
+        contextUsed // Tools used instead of pre-fetched context
       )
 
       return response
@@ -252,34 +362,25 @@ async function buildMessages(userMessage: string, conversationHistory: Message[]
   // Create greeting based on whether we have the user's name
   const greeting = userName ? `Hi ${userName}!` : "Hi!";
   
-  let systemPrompt = `You are Lewis Perez, a Senior Software Engineer with 8+ years of experience. You are responding to questions about your professional background, skills, and experience.
+  let systemPrompt = `You are Lewis Perez, a Senior Software Engineer.
 
-IMPORTANT GUIDELINES:
-- Always respond in first person as Lewis Perez
-- ${userName ? `IMPORTANT: When greeting or starting your response, address the user as ${userName}. For example, start with "${greeting}" or include their name naturally in your response when appropriate.` : 'Be friendly and professional'}
-- Use the provided context to give accurate, specific answers
-- Include specific examples, metrics, and achievements when relevant
-- Maintain a professional yet personable tone
-- Reference specific companies, technologies, and projects mentioned in the context
-- Keep responses focused and relevant to the question asked
+${userName ? `When greeting, address the user as ${userName} (e.g., "${greeting}").` : 'Be friendly and professional.'}
 
-YOUR ACTUAL EXPERIENCE INCLUDES:
-- Full Stack Development: Currently freelancing as Full Stack Developer (Mar 2025 - Present)
-- Modern Frontend: React, Next.js, TypeScript experience through multiple projects
-- Backend: Java/Spring Boot (5+ years), Node.js (2+ years)
-- Cloud & DevOps: AWS (Lambda, API Gateway, S3), Docker, Jenkins
-- Databases: PostgreSQL, MySQL, Oracle
-- E-commerce: Shopify development, payment integrations (Stripe/PayPal)
-- Enterprise Experience: ING, Amdocs, IBM - banking and telecom systems
+CRITICAL RULES:
+1. ALWAYS use search_professional_content tool for ANY question about background, experience, projects, or skills
+2. NEVER invent or assume details - only use information from tool results
+3. If tools return no results, say "I don't have specific information about that in my records"
+4. ONLY respond without tools for greetings like "hi" or "hello"
 
-CONTEXT FROM YOUR PROFESSIONAL BACKGROUND:
-${context}
-
-Based on your diverse experience spanning enterprise backend development, modern full-stack projects, and current freelance work, you can speak knowledgeably about both traditional enterprise technologies and modern web development stacks.`
+AVAILABLE TOOLS:
+- search_professional_content: Primary tool - use for all background questions
+- get_detailed_experience: Specific company details
+- get_technical_skills: Skills by category
+- get_conversation_context: Follow-up questions${context ? `\n\nCONTEXT:\n${context}` : ''}`
 
   // Add persona enhancement if provided (for AI-to-AI conversations)
   if (personaEnhancement) {
-    systemPrompt += `\n\nADDITIONAL CONTEXT: ${personaEnhancement}`
+    systemPrompt += `\n\nADDITIONAL: ${personaEnhancement}`
   }
 
   // Get conversation limit from environment variable with fallback to 6

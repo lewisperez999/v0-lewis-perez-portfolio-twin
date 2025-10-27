@@ -19,6 +19,11 @@ interface ChatMessage extends Message {
     type: string
     relevanceScore: number
   }>
+  toolCalls?: Array<{
+    toolCallId: string
+    toolName: string
+    args: Record<string, unknown>
+  }>
 }
 
 interface AIChatProps {
@@ -201,6 +206,21 @@ export function AIChat({ className }: AIChatProps) {
                         </div>
                       ) : (
                         <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere word-break-break-all">{message.content}</div>
+                      )}
+                      
+                      {message.toolCalls && message.toolCalls.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-border/50">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            🛠️ Tools Used:
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {message.toolCalls.map((toolCall, i) => (
+                              <Badge key={i} variant="outline" className="text-xs">
+                                {toolCall.toolName}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
                       )}
                       
                       {message.sources && message.sources.length > 0 && (

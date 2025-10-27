@@ -35,7 +35,9 @@ export function Header() {
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="font-bold text-xl gradient-text">Lewis Perez</div>
+          <a href="/" className="font-bold text-xl gradient-text hover:opacity-80 transition-opacity">
+            Lewis Perez
+          </a>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
@@ -69,6 +71,18 @@ export function Header() {
             >
               Contact
             </button>
+            <a
+              href="/security-plan"
+              className={`text-foreground/80 hover:text-foreground ${isScrolled ? 'dark:text-black dark:hover:text-black/80' : 'dark:text-foreground/90 dark:hover:text-white'} transition-all duration-300 hover:glow-secondary font-medium`}
+            >
+              Security Plan
+            </a>
+            <a
+              href="/security-journal"
+              className={`text-foreground/80 hover:text-foreground ${isScrolled ? 'dark:text-black dark:hover:text-black/80' : 'dark:text-foreground/90 dark:hover:text-white'} transition-all duration-300 hover:glow-secondary font-medium`}
+            >
+              Security Journal
+            </a>
 
             {/* Clerk Authentication */}
             <div className="flex items-center space-x-4">
@@ -170,6 +184,20 @@ export function Header() {
               >
                 Contact
               </button>
+              <a
+                href="/security-plan"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`text-left text-foreground hover:text-primary ${isScrolled ? 'dark:text-black dark:hover:text-black/80' : 'dark:text-foreground dark:hover:text-primary'} transition-colors block`}
+              >
+                Security Plan
+              </a>
+              <a
+                href="/security-journal"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`text-left text-foreground hover:text-primary ${isScrolled ? 'dark:text-black dark:hover:text-black/80' : 'dark:text-foreground dark:hover:text-primary'} transition-colors block`}
+              >
+                Security Journal
+              </a>
 
               {/* Admin Link - Mobile - Only for signed-in users */}
               <SignedIn>

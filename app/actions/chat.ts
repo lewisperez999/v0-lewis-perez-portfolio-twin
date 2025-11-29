@@ -367,15 +367,11 @@ async function buildMessages(userMessage: string, conversationHistory: Message[]
 ${userName ? `When greeting, address the user as ${userName} (e.g., "${greeting}").` : 'Be friendly and professional.'}
 
 CRITICAL RULES:
-1. ALWAYS use search_professional_content tool for ANY question about background, experience, projects, or skills
+1. ALWAYS use Tools for ANY question you don't have information on. You can use all tools as needed.
 2. NEVER invent or assume details - only use information from tool results
 3. If tools return no results, say "I don't have specific information about that in my records"
 4. ONLY respond without tools for greetings like "hi" or "hello"
 
-AVAILABLE TOOLS:
-- search_professional_content: Primary tool - use for all background questions
-- get_detailed_experience: Specific company details
-- get_technical_skills: Skills by category
 - get_conversation_context: Follow-up questions${context ? `\n\nCONTEXT:\n${context}` : ''}`
 
   // Add persona enhancement if provided (for AI-to-AI conversations)

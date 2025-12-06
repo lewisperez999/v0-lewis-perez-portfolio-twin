@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Mail, Phone, MapPin, Github, Linkedin, Twitter, Send } from "lucide-react"
+import { Mail, MapPin, Github, Linkedin, Send, MessageSquare } from "lucide-react"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 
@@ -165,26 +165,46 @@ export function Contact() {
   ]
 
   return (
-    <section id="contact" className="py-20 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-blue-500/10"></div>
+    <section id="contact" className="py-24 relative overflow-hidden">
+      {/* Enhanced Background Effects */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-blue-500/10"></div>
+        {/* Diagonal elements */}
+        <div className="absolute -top-1/4 -right-1/4 w-[60%] h-[100%] bg-gradient-to-bl from-pink-500/6 via-purple-500/4 to-transparent rotate-12 transform-gpu"></div>
+        <div className="absolute -bottom-1/4 -left-1/4 w-[50%] h-[80%] bg-gradient-to-tr from-blue-500/6 via-cyan-500/4 to-transparent -rotate-12 transform-gpu"></div>
+      </div>
+      
+      {/* Floating orbs */}
       <div className="absolute top-20 right-20 w-80 h-80 bg-gradient-to-r from-pink-400/10 to-purple-400/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute bottom-20 left-20 w-64 h-64 bg-gradient-to-r from-blue-400/10 to-cyan-400/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '0.5s' }}></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }}></div>
+      
+      {/* Decorative dots */}
+      <div className="absolute top-1/3 left-1/4 w-2 h-2 bg-pink-400/60 rounded-full animate-pulse-glow"></div>
+      <div className="absolute bottom-1/4 right-1/3 w-3 h-3 bg-purple-400/60 rounded-full animate-pulse-glow" style={{ animationDelay: '0.5s' }}></div>
+      <div className="absolute top-2/3 right-1/4 w-2 h-2 bg-blue-400/60 rounded-full animate-pulse-glow" style={{ animationDelay: '1s' }}></div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-foreground">
-            <span className="gradient-text">Get In Touch</span>
+        <div className="text-center mb-16">
+          {/* Section badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 mb-6 animate-fade-in-up">
+            <MessageSquare className="w-4 h-4 text-purple-500 animate-pulse" />
+            <span className="text-sm font-medium text-purple-600 dark:text-purple-400">Let&apos;s Connect</span>
+          </div>
+          
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <span className="gradient-text-animated">Get In Touch</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             Ready to work together? Let&apos;s discuss your next project
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Contact Form */}
-          <Card className="glass dark:glass-dark border-border dark:border-white/10 hover-glow animate-fade-in">
+          <Card className="glass dark:glass-dark border-border dark:border-white/10 hover-glow animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             <CardHeader>
-              <CardTitle>Send a Message</CardTitle>
+              <CardTitle className="text-xl gradient-text">Send a Message</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -196,6 +216,7 @@ export function Contact() {
                     onChange={handleChange} 
                     disabled={isSubmitting}
                     required 
+                    className="bg-white/50 dark:bg-white/5 border-border dark:border-white/10 focus:border-blue-500 transition-colors"
                   />
                 </div>
                 <div>
@@ -207,6 +228,7 @@ export function Contact() {
                     onChange={handleChange}
                     disabled={isSubmitting}
                     required
+                    className="bg-white/50 dark:bg-white/5 border-border dark:border-white/10 focus:border-blue-500 transition-colors"
                   />
                 </div>
                 <div>
@@ -218,9 +240,14 @@ export function Contact() {
                     onChange={handleChange}
                     disabled={isSubmitting}
                     required
+                    className="bg-white/50 dark:bg-white/5 border-border dark:border-white/10 focus:border-blue-500 transition-colors"
                   />
                 </div>
-                <Button type="submit" className="w-full glow-primary hover-glow bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border-0 text-white font-semibold" disabled={isSubmitting}>
+                <Button 
+                  type="submit" 
+                  className="w-full glow-primary hover-glow bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border-0 text-white font-semibold transition-all duration-300 hover:scale-[1.02]" 
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -239,20 +266,20 @@ export function Contact() {
 
           {/* Contact Information */}
           <div className="space-y-8">
-            <Card>
+            <Card className="glass dark:glass-dark border-border dark:border-white/10 hover-glow transition-all duration-500 hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
+                <CardTitle className="text-xl gradient-text">Contact Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {contactInfo.map((info, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <info.icon className="h-5 w-5 text-primary" />
+                  <div key={index} className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors group">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center group-hover:from-blue-500/30 group-hover:to-purple-500/30 transition-all duration-300 group-hover:scale-110">
+                      <info.icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">{info.label}</p>
                       {info.href ? (
-                        <a href={info.href} className="font-medium hover:text-primary transition-colors">
+                        <a href={info.href} className="font-medium hover:gradient-text transition-all duration-300">
                           {info.value}
                         </a>
                       ) : (
@@ -264,9 +291,9 @@ export function Contact() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="glass dark:glass-dark border-border dark:border-white/10 hover-glow transition-all duration-500 hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
               <CardHeader>
-                <CardTitle>Follow Me</CardTitle>
+                <CardTitle className="text-xl gradient-text">Follow Me</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex gap-4">
@@ -276,24 +303,24 @@ export function Contact() {
                       href={social.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center hover:bg-primary/20 transition-colors group"
+                      className="w-14 h-14 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center hover:from-blue-500/30 hover:to-purple-500/30 transition-all duration-300 group hover:scale-110 animate-border-glow"
                     >
-                      <social.icon className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                      <social.icon className="h-6 w-6 text-blue-500 dark:text-blue-400 group-hover:text-purple-500 transition-colors duration-300" />
                     </a>
                   ))}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+            <Card className="glass dark:glass-dark border-border dark:border-white/10 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 hover-glow transition-all duration-500 hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
               <CardContent className="p-6 text-center">
-                <h3 className="font-semibold mb-2">Ready to collaborate?</h3>
+                <h3 className="font-bold text-lg mb-2 gradient-text">Ready to collaborate?</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   I&apos;m always open to discussing new opportunities and interesting projects.
                 </p>
                 <Button 
                   variant="outline" 
-                  className="group bg-transparent"
+                  className="group bg-transparent border-blue-500/30 hover:border-purple-500/50 hover:bg-purple-500/10 transition-all duration-300 hover:scale-105"
                   onClick={(e) => {
                     e.preventDefault()
                     const success = openCalendly()
@@ -305,7 +332,7 @@ export function Contact() {
                     }
                   }}
                 >
-                  <Mail className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <Mail className="mr-2 h-4 w-4 group-hover:text-purple-500 transition-colors" />
                   Schedule a Call
                 </Button>
               </CardContent>

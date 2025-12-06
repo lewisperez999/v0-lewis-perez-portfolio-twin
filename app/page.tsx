@@ -35,16 +35,7 @@ export default function Home() {
       <Suspense fallback={<SkillsSkeleton />}>
         <Skills />
       </Suspense>
-      <section id="ai-chat" className="py-16 px-4 bg-muted/30">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-2">Chat with my AI</h2>
-          <p className="text-muted-foreground text-center mb-8 max-w-2xl mx-auto">
-            Have questions about my experience, skills, or projects? Chat with my AI assistant 
-            to get detailed answers about my professional background.
-          </p>
-          <AIChatWrapper />
-        </div>
-      </section>
+      <AIChatWrapper />
       <Contact />
     </main>
   )
